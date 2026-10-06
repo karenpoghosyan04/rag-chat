@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { background: #f6f8f5; }
+  body { margin: 0; min-width: 320px; color: #17211b; background: radial-gradient(circle at 65% 0%, rgba(187, 225, 205, .22), transparent 28rem), #f6f8f5; }
+  button, textarea { font: inherit; }
+}
+
+@layer components {
+  .panel { @apply rounded-2xl border border-line bg-white p-5; }
+  .eyebrow { @apply text-xs font-bold uppercase tracking-[0.14em] text-slate-400; }
+  .number { @apply grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-emerald-50 text-xs font-bold text-moss; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-lg border border-line bg-paper px-2.5 py-1.5 text-xs leading-4 text-slate-500; }
+}
+
+@media (max-width: 1023px) {
+  aside.sticky { position: static; }
+}
+

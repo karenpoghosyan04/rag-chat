@@ -1,0 +1,41 @@
+{"question": "Which design removes both recurrence and convolution from the sequence model?", "relevant": [{"contains": "based solely on attention mechanisms", "page": 1}]}
+{"question": "What training advantage follows from replacing step-by-step state propagation?", "relevant": [{"contains": "allows for significantly more parallelization", "page": 2}]}
+{"question": "How does the proposed system change the operation count needed to connect distant positions?", "relevant": [{"contains": "reduced to a constant number of operations", "page": 2}]}
+{"question": "How deep is the repeated block on the input-processing side?", "relevant": [{"contains": "stack of N = 6 identical layers", "page": 3}]}
+{"question": "What extra module lets the output stack consult the input stack?", "relevant": [{"contains": "performs multi-head attention over the output of the encoder stack", "page": 3}]}
+{"question": "What mechanism stops a generated position from peeking at future outputs?", "relevant": [{"contains": "prevent positions from attending to subsequent positions", "page": 3}]}
+{"question": "How are raw query-key products adjusted before normalization?", "relevant": [{"contains": "divide each by [√] dk", "page": 4}]}
+{"question": "Why is an inverse square-root factor applied when key vectors are wide?", "relevant": [{"contains": "dot products grow large in magnitude", "page": 4}]}
+{"question": "What capability is lost when all feature views are averaged into one focus operation?", "relevant": [{"contains": "jointly attend to information from different representation subspaces", "page": 5}]}
+{"question": "How many simultaneous focus branches are used in the reported configuration?", "relevant": [{"contains": "h = 8 parallel attention layers", "page": 5}]}
+{"question": "In how many distinct roles is the parallel focus mechanism deployed?", "relevant": [{"contains": "multi-head attention in three different ways", "page": 5}]}
+{"question": "What is the hidden width of the position-local nonlinear subnetwork?", "relevant": [{"contains": "inner-layer has dimensionality dff = 2048", "page": 5}]}
+{"question": "Which parameters are tied across token input, token output, and final prediction?", "relevant": [{"contains": "share the same weight matrix", "page": 5}]}
+{"question": "How does the model represent ordering despite lacking sequential or spatial filters?", "relevant": [{"contains": "inject some information about the relative or absolute position", "page": 6}]}
+{"question": "Why did the authors favor fixed trigonometric location signals over learned ones?", "relevant": [{"contains": "extrapolate to sequence lengths longer than the ones encountered during training", "page": 6}]}
+{"question": "Which layer family offers direct all-to-all communication without serial steps?", "relevant": [{"contains": "connects all positions with a constant number of sequentially executed operations", "page": 6}]}
+{"question": "Under what size relationship is global token interaction cheaper than recurrence?", "relevant": [{"contains": "length n is smaller than the representation dimensionality d", "page": 7}]}
+{"question": "What connectivity penalty comes from limiting each token to a local neighborhood?", "relevant": [{"contains": "increase the maximum path length to O (n/r)", "page": 7}]}
+{"question": "What qualitative linguistic patterns emerged when inspecting the learned focus maps?", "relevant": [{"contains": "behavior related to the syntactic and semantic structure", "page": 7}]}
+{"question": "Contrast the amount of bilingual training material used for the two translation directions.", "relevant": [{"contains": "about 4.5 million sentence pairs", "page": 7}, {"contains": "consisting of 36M sentences", "page": 7}]}
+{"question": "Roughly how many source and target units were packed into one optimization batch?", "relevant": [{"contains": "approximately 25000 source tokens and 25000 target tokens", "page": 7}]}
+{"question": "Compare the wall-clock schedules for the smaller and larger configurations.", "relevant": [{"contains": "100,000 steps or 12 hours", "page": 7}, {"contains": "300,000 steps (3.5 days)", "page": 7}]}
+{"question": "Which optimizer coefficients were selected for first moment, second moment, and numerical stability?", "relevant": [{"contains": "β 1 = 0.9, β 2 = 0.98 and ϵ = 10 [−][9]", "page": 7}]}
+{"question": "When does the learning-rate ramp stop and inverse-root decay begin?", "relevant": [{"contains": "warmup steps_ = 4000", "page": 7}]}
+{"question": "For the larger translation configuration, report German and French quality together with compute cost.", "relevant": [{"contains": "state-of-the-art BLEU score of 28.4", "page": 8}, {"contains": "big model achieves a BLEU score of 41.0", "page": 8}, {"contains": "Training took 3.5 days on 8 P100 GPUs", "page": 8}]}
+{"question": "By what margin did the strongest German system beat previously published alternatives?", "relevant": [{"contains": "outperforms the best previously reported models (including ensembles) by more than 2.0 BLEU", "page": 8}]}
+{"question": "How did checkpoint aggregation differ between the compact and expanded systems?", "relevant": [{"contains": "averaging the last 5 checkpoints", "page": 8}, {"contains": "averaged the last 20 checkpoints", "page": 8}]}
+{"question": "What decoding breadth and length adjustment were used for translation?", "relevant": [{"contains": "beam size of 4 and length penalty α = 0.6", "page": 8}]}
+{"question": "What happened to translation quality when the architecture used only one focus branch?", "relevant": [{"contains": "single-head attention is 0.9 BLEU worse than the best setting", "page": 9}]}
+{"question": "What do the ablations say about capacity and regularization?", "relevant": [{"contains": "bigger models are better, and dropout is very helpful in avoiding over-fitting", "page": 9}]}
+{"question": "Did trainable location vectors materially outperform the fixed periodic scheme?", "relevant": [{"contains": "observe nearly identical results to the base model", "page": 9}]}
+{"question": "How much labeled and automatically labeled data supported the grammar experiments?", "relevant": [{"contains": "about 40K training sentences", "page": 9}, {"contains": "approximately 17M sentences", "page": 9}]}
+{"question": "What score did the semi-supervised four-layer system obtain on the treebank test split?", "relevant": [{"contains": "|Transformer(4 layers)|semi-supervised|92.7|", "page": 10}]}
+{"question": "How was search configured when producing parse trees?", "relevant": [{"contains": "beam size of 21 and α = 0.3", "page": 10}]}
+{"question": "Which non-text input and output domains are identified as future extensions?", "relevant": [{"contains": "images, audio and video", "page": 10}]}
+{"question": "What dosage of aspirin was administered in the clinical trial?", "relevant": []}
+{"question": "Which Martian crater hosted the rover's soil experiment?", "relevant": []}
+{"question": "How did the quarterly tax rate affect the company's dividend?", "relevant": []}
+{"question": "What recipe temperature produced the crispest sourdough crust?", "relevant": []}
+{"question": "Which encryption cipher protected the blockchain wallet?", "relevant": []}
+{"question": "How many goals were scored in the championship football match?", "relevant": []}

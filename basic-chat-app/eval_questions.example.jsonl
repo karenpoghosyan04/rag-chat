@@ -1,0 +1,3 @@
+{"question":"Why did the authors use multi-head attention?","relevant":[{"page":5,"contains":"Multi-head attention allows the model"}]}
+{"question":"What optimizer was used for training?","relevant":[{"contains":"Adam optimizer"}]}
+{"question":"Does the paper report results on speech recognition?","relevant":[]}
