@@ -17,6 +17,7 @@ const settingsForm = document.querySelector('#settings-form')
 const settingsError = document.querySelector('#settings-error')
 const settingsSummary = document.querySelector('#settings-summary')
 const resetSettings = document.querySelector('#reset-settings')
+const SETTINGS_VERSION = 'embeddinggemma-2-v1'
 
 const DEFAULT_SETTINGS = {
   sentences_per_chunk: 4,
@@ -24,9 +25,9 @@ const DEFAULT_SETTINGS = {
   search_method: 'hybrid',
   max_context_chunks: 4,
   bm25_min_relevance: 0.18,
-  embedding_min_similarity: 0.35,
-  min_score: 0.35,
-  hybrid_candidates: 16,
+  embedding_min_similarity: 0.63,
+  min_score: 0.20,
+  hybrid_candidates: 25,
   rrf_k: 60,
   bm25_weight: 1,
   embedding_weight: 1,
@@ -39,7 +40,18 @@ const DEFAULT_SETTINGS = {
 
 function storedSettings() {
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('rag-settings') || '{}') }
+    const stored = JSON.parse(localStorage.getItem('rag-settings') || '{}')
+    if (localStorage.getItem('rag-settings-version') !== SETTINGS_VERSION) {
+      localStorage.setItem('rag-settings-version', SETTINGS_VERSION)
+      return {
+        ...DEFAULT_SETTINGS,
+        ...stored,
+        embedding_min_similarity: DEFAULT_SETTINGS.embedding_min_similarity,
+        min_score: DEFAULT_SETTINGS.min_score,
+        hybrid_candidates: DEFAULT_SETTINGS.hybrid_candidates,
+      }
+    }
+    return { ...DEFAULT_SETTINGS, ...stored }
   } catch {
     return { ...DEFAULT_SETTINGS }
   }
@@ -377,7 +389,10 @@ async function uploadDocument(file) {
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'The PDF could not be uploaded.')
     updateDocumentStatus(data)
-    addMessage('assistant', `${data.filename} is ready. Ask me a question about it.`)
+    const storageMessage = data.deduplicated
+      ? 'It was already indexed, so I reused the saved copy.'
+      : 'It was indexed and saved for future uploads.'
+    addMessage('assistant', `${data.filename} is ready. ${storageMessage} Ask me a question about it.`)
   } catch (error) {
     await checkSetup()
     addMessage('assistant', error.message, 'error')
@@ -460,6 +475,7 @@ settingsForm.addEventListener('submit', async (event) => {
   )
   settings = nextSettings
   localStorage.setItem('rag-settings', JSON.stringify(settings))
+  localStorage.setItem('rag-settings-version', SETTINGS_VERSION)
   const applyButton = settingsForm.querySelector('.primary-button')
   applyButton.disabled = true
   applyButton.textContent = requiresReindex ? 'Rebuilding…' : 'Applying…'

@@ -1,7 +1,9 @@
 import io
 import json
 import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError
 
@@ -139,6 +141,48 @@ class ChatAppTests(unittest.TestCase):
         mocked_embedder.return_value = Embedder()
         self.assertEqual(app.embed_texts(["passage"]), [[1.0, 0.0]])
         self.assertEqual(app.embed_texts(["query"], kind="query"), [[0.0, 1.0]])
+
+    @patch.dict(os.environ, {
+        "EMBEDDING_PROVIDER": "local",
+        "LOCAL_EMBEDDING_MODEL": "google/embeddinggemma-2",
+    }, clear=True)
+    @patch("app.local_embedder")
+    def test_embeddinggemma_2_uses_retrieval_prompts_and_normalization(self, mocked_embedder):
+        class Vectors:
+            def tolist(self):
+                return [[1.0, 0.0]]
+
+        class Embedder:
+            def encode_query(self, texts, **kwargs):
+                self.texts = texts
+                self.kwargs = kwargs
+                return Vectors()
+
+            def encode_document(self, texts, **kwargs):
+                self.texts = texts
+                self.kwargs = kwargs
+                return Vectors()
+
+        embedder = Embedder()
+        mocked_embedder.return_value = embedder
+
+        self.assertEqual(app.embed_texts(["aurora"], kind="query"), [[1.0, 0.0]])
+        self.assertEqual(embedder.texts, ["aurora"])
+        self.assertTrue(embedder.kwargs["normalize_embeddings"])
+
+        app.embed_texts(["charged particles"], kind="passage")
+        self.assertEqual(embedder.texts, ["charged particles"])
+
+    def test_embedding_profile_invalidates_incompatible_cached_vectors(self):
+        settings = app.RagSettings()
+        bge = app.embedding_index_profile("local", "BAAI/bge-small-en-v1.5")
+        gemma = app.embedding_index_profile("local", "google/embeddinggemma-2")
+
+        self.assertNotEqual(bge, gemma)
+        self.assertNotEqual(
+            app.document_index_signature(settings, bge),
+            app.document_index_signature(settings, gemma),
+        )
 
     @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key", "OPENAI_MODEL": "test-model"}, clear=True)
     @patch("app.urlopen")
@@ -569,7 +613,8 @@ class ChatAppTests(unittest.TestCase):
 
         self.assertEqual(matches, [])
 
-    def test_hybrid_min_score_is_configurable(self):
+    @patch("app.rerank_texts", return_value=[0.5])
+    def test_hybrid_min_score_is_configurable(self, _mocked_rerank):
         chunk = app.DocumentChunk("Transformers translate natural language.", 1, 1)
         app.DOCUMENT_INDEX.replace(
             "paper.pdf",
@@ -658,6 +703,78 @@ class ChatAppTests(unittest.TestCase):
         app.DOCUMENT_INDEX.replace("notes.pdf", chunks)
         matches = app.DOCUMENT_INDEX.search("summarize", limit=1)
         self.assertEqual(matches, [chunks[0]])
+
+    def test_persistent_store_round_trips_pdf_chunks_and_vectors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = app.PersistentDocumentStore(Path(directory))
+            chunks = [
+                app.DocumentChunk("Vector databases persist embeddings.", 1, 1),
+                app.DocumentChunk("Language models answer questions.", 2, 2),
+            ]
+            try:
+                collection = store.save(
+                    "a" * 64,
+                    "paper.pdf",
+                    b"%PDF-source",
+                    chunks,
+                    2,
+                    {2},
+                    [[1.0, 0.0], [0.0, 1.0]],
+                    "test-model",
+                    "test-signature",
+                )
+            finally:
+                store.close()
+
+            reopened = app.PersistentDocumentStore(Path(directory))
+            try:
+                restored = reopened.load_latest()
+                incompatible = reopened.load("a" * 64, required_signature="new-profile")
+                matches = reopened.search_dense(
+                    "a" * 64,
+                    "test-signature",
+                    collection,
+                    [1.0, 0.0],
+                    2,
+                )
+                reopened.deactivate()
+                self.assertIsNone(reopened.load_latest())
+            finally:
+                reopened.close()
+
+        self.assertIsNotNone(restored)
+        self.assertIsNone(incompatible)
+        self.assertEqual(restored.pdf_bytes, b"%PDF-source")
+        self.assertEqual(restored.chunks, chunks)
+        self.assertEqual(restored.embeddings, [[1.0, 0.0], [0.0, 1.0]])
+        self.assertEqual(matches[0], (1.0, 1))
+
+    @patch("app.embedding_config", return_value=("local", "test-model", "", ""))
+    @patch("app.embed_texts", return_value=[[1.0, 0.0]])
+    @patch("app.parse_pdf")
+    def test_duplicate_upload_reuses_persisted_index(
+        self, mocked_parse, mocked_embed, _mocked_config
+    ):
+        chunks = [app.DocumentChunk("Persistent vector content.", 1, 1)]
+        mocked_parse.return_value = (chunks, 1, set())
+        with tempfile.TemporaryDirectory() as directory:
+            store = app.PersistentDocumentStore(Path(directory))
+            try:
+                first = app.ingest_document("first.pdf", b"same-pdf", app.DEFAULT_SETTINGS, store)
+            finally:
+                store.close()
+            reopened = app.PersistentDocumentStore(Path(directory))
+            try:
+                second = app.ingest_document(
+                    "renamed.pdf", b"same-pdf", app.DEFAULT_SETTINGS, reopened
+                )
+            finally:
+                reopened.close()
+
+        self.assertFalse(first["deduplicated"])
+        self.assertTrue(second["deduplicated"])
+        self.assertEqual(mocked_parse.call_count, 1)
+        self.assertEqual(mocked_embed.call_count, 1)
 
     @patch("app.embed_texts", side_effect=RuntimeError("model unavailable"))
     @patch("app.parse_pdf")

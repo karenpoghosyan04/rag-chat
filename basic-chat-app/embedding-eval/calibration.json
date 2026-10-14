@@ -1,0 +1,60 @@
+{
+  "dataset": {
+    "total": 41,
+    "answerable": 35,
+    "unanswerable": 6,
+    "calibration_case_numbers": [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 34, 36, 38, 39, 40],
+    "held_out_case_numbers": [5, 10, 15, 20, 25, 30, 35, 37, 41]
+  },
+  "selection_objective": "geometric mean of recall@5, precision@5, no-answer accuracy, and answerability accuracy",
+  "tie_break": "choose the strongest reranker floor that preserves every labeled relevant candidate on calibration data",
+  "google/embeddinggemma-2": {
+    "selected_thresholds": {
+      "embedding_min_similarity": 0.63,
+      "min_score": 0.2
+    },
+    "similarity_distributions": {
+      "relevant_chunks": {"min": 0.607934, "p25": 0.667037, "median": 0.687964, "p75": 0.732336, "max": 0.79929},
+      "irrelevant_chunks": {"min": 0.523649, "p25": 0.60544, "median": 0.629147, "p75": 0.653347, "max": 0.761488},
+      "answerable_query_max": {"min": 0.631187, "p25": 0.684268, "median": 0.698608, "p75": 0.737864, "max": 0.79929},
+      "unanswerable_query_max": {"min": 0.583367, "p25": 0.587858, "median": 0.5966, "p75": 0.609923, "max": 0.625233}
+    },
+    "reranker_distributions": {
+      "relevant_candidates": {"min": 0.208471, "p25": 0.37161, "median": 0.615414, "p75": 0.735421, "max": 0.870906},
+      "irrelevant_candidates": {"min": 0.143983, "p25": 0.182385, "median": 0.215886, "p75": 0.302692, "max": 0.852775}
+    },
+    "held_out_metrics": {
+      "recall@1": 0.714286,
+      "recall@5": 1.0,
+      "precision@5": 0.2,
+      "mrr@5": 0.821429,
+      "no_answer_accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "answerability_accuracy": 1.0
+    },
+    "all_case_metrics": {
+      "recall@1": 0.628571,
+      "recall@5": 0.914286,
+      "precision@5": 0.182857,
+      "mrr@5": 0.74381,
+      "no_answer_accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "answerability_accuracy": 1.0
+    }
+  },
+  "BAAI/bge-small-en-v1.5": {
+    "selected_thresholds": {
+      "embedding_min_similarity": 0.555,
+      "min_score": 0.2
+    },
+    "all_case_metrics": {
+      "recall@1": 0.6,
+      "recall@5": 0.942857,
+      "precision@5": 0.188571,
+      "mrr@5": 0.745238,
+      "no_answer_accuracy": 1.0,
+      "false_positive_rate": 0.0,
+      "answerability_accuracy": 1.0
+    }
+  }
+}

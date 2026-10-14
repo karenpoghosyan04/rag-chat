@@ -10,7 +10,8 @@ Browser UI                    Python server                         Gemini / Ope
 upload a PDF ───────────────► PyMuPDF4LLM layout extraction
                               headings + paragraphs + tables
                               tunable sentence windows and overlap
-                              BM25 index + embedding vectors
+                              SQLite PDF/chunk catalogue
+                              Qdrant vector index on disk
 
 type a question
       │
@@ -28,7 +29,14 @@ type a question
 
 The browser never receives your API key. That is the most important reason for having a backend instead of calling the model directly from JavaScript.
 
-Embeddings run locally with FastEmbed and `BAAI/bge-small-en-v1.5` by default. The model is downloaded once into `.models/`, then document and query embeddings use local ONNX inference without Gemini/OpenAI embedding quota. Gemini or OpenAI is still used for final answer generation.
+Embeddings run locally with `google/embeddinggemma-2` through Sentence Transformers by default. Queries use the official `SearchQuery` prompt and chunks use `Document`; both are L2-normalized. The text-only configuration omits the independent vision and audio encoders, uses float32 on CPU (bfloat16 on supported CUDA devices), and does not consume Gemini/OpenAI embedding quota. Gemini or OpenAI is still used for final answer generation.
+
+Uploaded PDFs are content-addressed with SHA-256 and persisted under `data/` by default. SQLite stores each unique PDF once together with its chunk text and metadata; Qdrant stores and searches the embedding vectors. Re-uploading identical bytes with the same chunking and embedding configuration reuses the existing index without parsing or embedding again. The most recently used document is restored when the server restarts. Set `RAG_DATA_DIR` to move this storage, and back up that directory if the documents must survive disk or machine loss.
+
+```text
+data/documents.sqlite3   original PDF bytes, chunks, metadata, active selection
+data/qdrant/             persistent embedding collections and vector indexes
+```
 
 ## Run it
 
@@ -55,7 +63,8 @@ Embeddings run locally with FastEmbed and `BAAI/bge-small-en-v1.5` by default. T
    GEMINI_MODEL=gemini-3.6-flash
    GEMINI_EMBEDDING_MODEL=gemini-embedding-001
    EMBEDDING_PROVIDER=local
-   LOCAL_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
+   LOCAL_EMBEDDING_MODEL=google/embeddinggemma-2
+   LOCAL_EMBEDDING_BATCH_SIZE=1
    APP_PORT=8000
    ```
 
@@ -75,8 +84,8 @@ Open **Settings** in the top-right corner. Values are validated by both the brow
 
 - **Chunking:** sentences per chunk and overlapping sentences. Changing either automatically re-parses and re-embeds the active PDF.
 - **Retrieval mode:** hybrid, embeddings only, or BM25 only.
-- **Two-stage retrieval:** BM25 and dense search first produce 25 broad RRF candidates without an aggressive cutoff. A local ONNX cross-encoder reranks those query/passage pairs, and `min_score` is applied only to normalized post-rerank relevance scores.
-- **Relevance gates:** `min_score` controls final abstention after reranking. The absolute dense signal calibrates cross-encoder/RRF rank fusion so the same 0–1 threshold remains meaningful for out-of-domain queries.
+- **Two-stage retrieval:** BM25 and dense search first produce 25 broad RRF candidates without an aggressive cutoff. A local ONNX cross-encoder reranks those query/passage pairs, and `min_score` is applied to its normalized per-passage relevance score.
+- **Relevance gates:** `embedding_min_similarity` is a query-level abstention gate over the strongest dense match (and a candidate floor in embeddings-only mode). `min_score` is a separate passage-level cross-encoder gate. The calibrated defaults are `0.63` and `0.20`, respectively; see `embedding-eval/comparison.md` for the split and distributions.
 - **Hybrid fusion:** candidate pool, RRF rank constant, BM25 weight, and embedding weight.
 - **Context:** number of retrieved PDF chunks and conversation messages sent to the model.
 - **Vision:** enable/disable page rendering and choose the maximum attached pages.
@@ -88,7 +97,7 @@ The defaults are a starting point, not universally optimal. Tune them against a 
 
 ## Measure retrieval quality
 
-Do this before adding a vector database or changing chunking. Create a JSONL file with questions and the evidence each question should retrieve. A label may use a page, a short exact passage, or both; an empty `relevant` list marks a question the PDF cannot answer.
+Do this before changing chunking, embedding models, or retrieval thresholds. Create a JSONL file with questions and the evidence each question should retrieve. A label may use a page, a short exact passage, or both; an empty `relevant` list marks a question the PDF cannot answer.
 
 ```json
 {"question":"Why use multi-head attention?","relevant":[{"page":5,"contains":"Multi-head attention allows the model"}]}
@@ -158,7 +167,7 @@ For CI, gate both evidence recall and abstention behavior:
 
 The evaluator refuses to label a BM25 fallback as a hybrid run when embeddings are unavailable.
 
-For this app's current scope—one PDF of at most 10 MB—an external vector database is not needed. The in-memory exact cosine scan is simple and gives exact nearest-neighbor scoring. Add a vector store when you need persistence across restarts, many documents/tenants, metadata filtering, concurrent writers, or enough chunks that exact scanning misses the latency target. A vector database changes storage and search speed; it does not make weak embeddings, chunking, or labels more accurate.
+Qdrant runs in embedded, on-disk mode, so this learning app does not require a separate database server. Dense similarity queries go through Qdrant while the active document keeps a small in-memory BM25 index for hybrid retrieval. For a multi-process or production deployment, move Qdrant to its standalone server and mount its storage on a persistent volume. A vector database improves persistence and search scaling; it does not make weak embeddings, chunking, or labels more accurate.
 
 ## What to read, in order
 
@@ -179,7 +188,7 @@ Download [Attention Is All You Need from arXiv](https://arxiv.org/pdf/1706.03762
 
 Also try: “What does Figure 1 show?” The app retrieves the caption, renders the relevant page, and sends that page image to the configured multimodal model.
 
-Uploads are limited to 10 MB, one active PDF replaces the previous one, and the in-memory index disappears when the server restarts. Uploading embeds every chunk once; each non-greeting PDF question embeds the query once. With the default local provider these operations consume CPU but no embedding API quota. Visual questions can send rendered PDF pages to the configured answer model, which adds latency, token usage, and provider-side data processing. Ordinary text questions do not send page images.
+Uploads are limited to 10 MB and one PDF is active at a time, but every unique PDF remains in persistent storage. Uploading a new document embeds every chunk once; uploading the same bytes with the same index configuration reuses the stored chunks and vectors. Each non-greeting PDF question embeds the query once. With the default local provider these operations consume CPU but no embedding API quota. Visual questions can send rendered PDF pages to the configured answer model, which adds latency, token usage, and provider-side data processing. Ordinary text questions do not send page images.
 
 Grounded answers are instructed to cite PDF claims inline as `[Source N]` or `[Visual page N]`. The server validates that at least one valid supplied label appears whenever PDF evidence is used and adds an evidence footer if the provider omits every citation.
 
@@ -212,8 +221,8 @@ python3 -m unittest discover -s tests -v
 ## Current limitations
 
 - Conversation history only lives in the browser tab.
-- The PDF index and source bytes only live in server memory and currently hold one document.
-- Retrieval builds a recall-oriented set of up to 25 BM25+dense RRF candidates, reranks them with `jinaai/jina-reranker-v1-tiny-en` through FastEmbed, normalizes the post-rerank confidence, and only then applies `min_score`. Post-rerank filtering removes chunks whose document-global source ranges overlap by at least 40%, chunks with at least 70% literal containment, chunks sharing an exact normalized sentence of 80 or more characters, and embedding pairs above 0.88 cosine similarity when both chunks exceed 20 words. Sentence matching also works in BM25-only mode. Markdown blockquotes such as contribution footnotes form separate chunk boundaries instead of being mixed into the preceding abstract. These thresholds are heuristics and should be calibrated on a labeled evaluation set before production use.
+- One PDF is active in the chat at a time. Previously uploaded documents remain in `RAG_DATA_DIR`, but the UI does not yet include a document-library picker.
+- Retrieval builds a recall-oriented set of up to 25 BM25+dense RRF candidates and reranks them with `jinaai/jina-reranker-v1-tiny-en` through FastEmbed. The dense and reranker gates have distinct calibrated roles described above. Post-rerank filtering removes chunks whose document-global source ranges overlap by at least 40%, chunks with at least 70% literal word-sequence containment, chunks sharing an exact normalized sentence of 80 or more characters, and embedding pairs above 0.88 cosine similarity when both chunks exceed 20 words. Sentence matching also works in BM25-only mode. Markdown blockquotes such as contribution footnotes form separate chunk boundaries instead of being mixed into the preceding abstract.
 - PyMuPDF4LLM handles layout, columns, headings, tables, and visual-region detection. If no local OCR engine is installed, image-only scanned text is handled only when a document or visual question triggers the vision fallback.
 - Figure understanding is probabilistic. Do not rely on a vision model for precise chart values that are not clearly legible.
 - Responses are returned all at once rather than streamed token by token.

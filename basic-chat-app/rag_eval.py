@@ -102,6 +102,7 @@ def evaluate_cases(
     }
     reciprocal_rank = 0.0
     correct_rejections = 0
+    answerable_passed_gate = 0
     unanswerable_retrieved_chunks = 0
     latencies_ms: list[float] = []
     details: list[dict] = []
@@ -123,6 +124,8 @@ def evaluate_cases(
             if any(evidence_matches(chunk, label) for label in case.relevant)
         ]
         if case.relevant:
+            if retrieved:
+                answerable_passed_gate += 1
             if ranks:
                 reciprocal_rank += 1.0 / ranks[0]
             for k in cutoffs:
@@ -189,9 +192,13 @@ def evaluate_cases(
     metrics["gated_false_positive_rate"] = (
         1.0 - correct_rejections / len(unanswerable) if unanswerable else None
     )
+    metrics["answerability_accuracy"] = (
+        (answerable_passed_gate + correct_rejections) / len(cases) if cases else None
+    )
     metrics["avg_unanswerable_chunks"] = (
         unanswerable_retrieved_chunks / len(unanswerable) if unanswerable else None
     )
+    metrics["latency_ms_mean"] = statistics.fmean(latencies_ms)
     metrics["latency_ms_p50"] = statistics.median(latencies_ms)
     metrics["latency_ms_p95"] = sorted(latencies_ms)[max(0, int(len(latencies_ms) * 0.95 + 0.999) - 1)]
     recall_at_max_k = metrics[f"recall@{max_k}"]

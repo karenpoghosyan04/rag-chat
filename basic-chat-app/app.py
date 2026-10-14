@@ -13,18 +13,22 @@ from __future__ import annotations
 
 import base64
 import difflib
+import hashlib
 import json
 import math
 import os
 import re
+import sqlite3
 import threading
 import time
+import uuid
 from collections import Counter
+from contextlib import contextmanager
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Iterator, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote
 from urllib.request import Request, urlopen
@@ -32,6 +36,8 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).parent
 STATIC_DIR = ROOT / "static"
+DEFAULT_DATA_DIR = ROOT / "data"
+INDEX_SCHEMA_VERSION = 2
 OPENAI_URL = "https://api.openai.com/v1/responses"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings"
@@ -44,8 +50,12 @@ CHUNK_OVERLAP_SENTENCES = 1
 CHUNK_SIZE_TOKENS = 1024
 CHUNK_OVERLAP_TOKENS = 0
 MIN_RELEVANCE = 0.18
-MIN_EMBEDDING_SIMILARITY = 0.35
-MIN_RETRIEVAL_SCORE = 0.35
+DEFAULT_LOCAL_EMBEDDING_MODEL = "google/embeddinggemma-2"
+EMBEDDINGGEMMA_QUERY_PROMPT = "SearchQuery"
+EMBEDDINGGEMMA_DOCUMENT_PROMPT = "Document"
+EMBEDDINGGEMMA_BATCH_SIZE = 1
+MIN_EMBEDDING_SIMILARITY = 0.63
+MIN_RETRIEVAL_SCORE = 0.20
 HYBRID_CANDIDATES = 25
 RERANKER_MODEL = "jinaai/jina-reranker-v1-tiny-en"
 RRF_K = 60
@@ -260,11 +270,394 @@ class RankedChunk:
     score: float
 
 
+@dataclass(frozen=True)
+class StoredDocument:
+    """A complete persisted PDF index restored from local storage."""
+
+    document_hash: str
+    filename: str
+    pdf_bytes: bytes
+    chunks: list[DocumentChunk]
+    page_count: int
+    visual_pages: set[int]
+    embeddings: list[list[float]]
+    embedding_model: str
+    index_signature: str
+    vector_collection: str
+
+
+class PersistentDocumentStore:
+    """SQLite PDF catalogue plus an on-disk Qdrant vector index."""
+
+    def __init__(self, data_dir: Path) -> None:
+        self.data_dir = data_dir
+        self.sqlite_path = data_dir / "documents.sqlite3"
+        self.qdrant_path = data_dir / "qdrant"
+        self._qdrant = None
+        self._lock = threading.RLock()
+        data_dir.mkdir(parents=True, exist_ok=True)
+        self._initialize_sqlite()
+
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        connection = sqlite3.connect(self.sqlite_path, timeout=30)
+        try:
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
+            connection.execute("PRAGMA journal_mode = WAL")
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
+    def _initialize_sqlite(self) -> None:
+        with self._connect() as connection:
+            connection.executescript("""
+                CREATE TABLE IF NOT EXISTS documents (
+                    document_hash TEXT PRIMARY KEY,
+                    filename TEXT NOT NULL,
+                    pdf_bytes BLOB NOT NULL,
+                    page_count INTEGER NOT NULL,
+                    visual_pages TEXT NOT NULL,
+                    embedding_model TEXT NOT NULL,
+                    index_signature TEXT NOT NULL,
+                    vector_collection TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    last_opened_at REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS chunks (
+                    document_hash TEXT NOT NULL,
+                    chunk_number INTEGER NOT NULL,
+                    text TEXT NOT NULL,
+                    page INTEGER NOT NULL,
+                    page_end INTEGER,
+                    section TEXT NOT NULL,
+                    char_start INTEGER,
+                    char_end INTEGER,
+                    PRIMARY KEY (document_hash, chunk_number),
+                    FOREIGN KEY (document_hash) REFERENCES documents(document_hash) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS chunks_document_hash
+                    ON chunks(document_hash);
+                CREATE TABLE IF NOT EXISTS app_state (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+            """)
+
+    def _client(self):
+        if self._qdrant is None:
+            try:
+                from qdrant_client import QdrantClient
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Persistent vector storage is unavailable. Run: pip install -r requirements.txt"
+                ) from exc
+            self.qdrant_path.mkdir(parents=True, exist_ok=True)
+            self._qdrant = QdrantClient(path=str(self.qdrant_path))
+        return self._qdrant
+
+    def close(self) -> None:
+        """Release the local Qdrant file lock."""
+        with self._lock:
+            if self._qdrant is not None:
+                self._qdrant.close()
+                self._qdrant = None
+
+    @staticmethod
+    def _collection_name(embedding_model: str, vector_size: int) -> str:
+        model_key = hashlib.sha256(embedding_model.encode("utf-8")).hexdigest()[:12]
+        return f"pdf_chunks_{model_key}_{vector_size}"
+
+    @staticmethod
+    def _filter(document_hash: str, index_signature: str):
+        from qdrant_client import models
+
+        return models.Filter(must=[
+            models.FieldCondition(
+                key="document_hash",
+                match=models.MatchValue(value=document_hash),
+            ),
+            models.FieldCondition(
+                key="index_signature",
+                match=models.MatchValue(value=index_signature),
+            ),
+        ])
+
+    def _delete_vectors(
+        self,
+        document_hash: str,
+        index_signature: str,
+        collection_name: str,
+    ) -> None:
+        if not collection_name:
+            return
+        from qdrant_client import models
+
+        client = self._client()
+        if not client.collection_exists(collection_name):
+            return
+        client.delete(
+            collection_name=collection_name,
+            points_selector=models.FilterSelector(
+                filter=self._filter(document_hash, index_signature),
+            ),
+            wait=True,
+        )
+
+    def save(
+        self,
+        document_hash: str,
+        filename: str,
+        pdf_bytes: bytes,
+        chunks: list[DocumentChunk],
+        page_count: int,
+        visual_pages: set[int],
+        embeddings: list[list[float]],
+        embedding_model: str,
+        index_signature: str,
+    ) -> str:
+        """Atomically replace one document's metadata and upsert its vectors."""
+        collection_name = ""
+        with self._lock:
+            with self._connect() as connection:
+                previous = connection.execute(
+                    "SELECT index_signature, vector_collection FROM documents WHERE document_hash = ?",
+                    (document_hash,),
+                ).fetchone()
+
+            if embeddings:
+                from qdrant_client import models
+
+                vector_size = len(embeddings[0])
+                collection_name = self._collection_name(embedding_model, vector_size)
+                client = self._client()
+                if not client.collection_exists(collection_name):
+                    client.create_collection(
+                        collection_name=collection_name,
+                        vectors_config=models.VectorParams(
+                            size=vector_size,
+                            distance=models.Distance.COSINE,
+                        ),
+                    )
+                points = [
+                    models.PointStruct(
+                        id=str(uuid.uuid5(
+                            uuid.NAMESPACE_URL,
+                            f"{document_hash}:{index_signature}:{chunk.number}",
+                        )),
+                        vector=embedding,
+                        payload={
+                            "document_hash": document_hash,
+                            "index_signature": index_signature,
+                            "chunk_number": chunk.number,
+                            "filename": filename,
+                            "page": chunk.page,
+                        },
+                    )
+                    for chunk, embedding in zip(chunks, embeddings)
+                ]
+                for offset in range(0, len(points), 128):
+                    client.upsert(
+                        collection_name=collection_name,
+                        points=points[offset:offset + 128],
+                        wait=True,
+                    )
+
+            now = time.time()
+            with self._connect() as connection:
+                created_at = connection.execute(
+                    "SELECT created_at FROM documents WHERE document_hash = ?",
+                    (document_hash,),
+                ).fetchone()
+                connection.execute("DELETE FROM chunks WHERE document_hash = ?", (document_hash,))
+                connection.execute("""
+                    INSERT OR REPLACE INTO documents (
+                        document_hash, filename, pdf_bytes, page_count, visual_pages,
+                        embedding_model, index_signature, vector_collection,
+                        created_at, last_opened_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    document_hash,
+                    filename,
+                    sqlite3.Binary(pdf_bytes),
+                    page_count,
+                    json.dumps(sorted(visual_pages)),
+                    embedding_model,
+                    index_signature,
+                    collection_name,
+                    created_at["created_at"] if created_at else now,
+                    now,
+                ))
+                connection.executemany("""
+                    INSERT INTO chunks (
+                        document_hash, chunk_number, text, page, page_end,
+                        section, char_start, char_end
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, [
+                    (
+                        document_hash,
+                        chunk.number,
+                        chunk.text,
+                        chunk.page,
+                        chunk.page_end,
+                        chunk.section,
+                        chunk.char_start,
+                        chunk.char_end,
+                    )
+                    for chunk in chunks
+                ])
+                connection.execute("""
+                    INSERT OR REPLACE INTO app_state (key, value)
+                    VALUES ('active_document_hash', ?)
+                """, (document_hash,))
+
+            if previous and (
+                previous["index_signature"] != index_signature
+                or previous["vector_collection"] != collection_name
+            ):
+                self._delete_vectors(
+                    document_hash,
+                    previous["index_signature"],
+                    previous["vector_collection"],
+                )
+        return collection_name
+
+    def _load_vectors(
+        self,
+        document_hash: str,
+        index_signature: str,
+        collection_name: str,
+        chunk_numbers: list[int],
+    ) -> list[list[float]]:
+        if not collection_name:
+            return []
+        client = self._client()
+        if not client.collection_exists(collection_name):
+            return []
+        vectors_by_number: dict[int, list[float]] = {}
+        offset = None
+        while True:
+            points, offset = client.scroll(
+                collection_name=collection_name,
+                scroll_filter=self._filter(document_hash, index_signature),
+                limit=256,
+                offset=offset,
+                with_payload=True,
+                with_vectors=True,
+            )
+            for point in points:
+                if isinstance(point.vector, list) and point.payload:
+                    vectors_by_number[int(point.payload["chunk_number"])] = point.vector
+            if offset is None:
+                break
+        if len(vectors_by_number) != len(chunk_numbers):
+            return []
+        return [vectors_by_number[number] for number in chunk_numbers]
+
+    def load(
+        self,
+        document_hash: str,
+        required_signature: Optional[str] = None,
+    ) -> Optional[StoredDocument]:
+        """Load one exact document/index version and mark it as recently used."""
+        with self._lock, self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM documents WHERE document_hash = ?",
+                (document_hash,),
+            ).fetchone()
+            if not row or (required_signature and row["index_signature"] != required_signature):
+                return None
+            chunk_rows = connection.execute(
+                "SELECT * FROM chunks WHERE document_hash = ? ORDER BY chunk_number",
+                (document_hash,),
+            ).fetchall()
+            connection.execute(
+                "UPDATE documents SET last_opened_at = ? WHERE document_hash = ?",
+                (time.time(), document_hash),
+            )
+            connection.execute("""
+                INSERT OR REPLACE INTO app_state (key, value)
+                VALUES ('active_document_hash', ?)
+            """, (document_hash,))
+        chunks = [
+            DocumentChunk(
+                text=chunk["text"],
+                page=chunk["page"],
+                number=chunk["chunk_number"],
+                page_end=chunk["page_end"],
+                section=chunk["section"],
+                char_start=chunk["char_start"],
+                char_end=chunk["char_end"],
+            )
+            for chunk in chunk_rows
+        ]
+        embeddings = self._load_vectors(
+            document_hash,
+            row["index_signature"],
+            row["vector_collection"],
+            [chunk.number for chunk in chunks],
+        )
+        if row["embedding_model"] and not embeddings:
+            return None
+        return StoredDocument(
+            document_hash=document_hash,
+            filename=row["filename"],
+            pdf_bytes=bytes(row["pdf_bytes"]),
+            chunks=chunks,
+            page_count=row["page_count"],
+            visual_pages=set(json.loads(row["visual_pages"])),
+            embeddings=embeddings,
+            embedding_model=row["embedding_model"],
+            index_signature=row["index_signature"],
+            vector_collection=row["vector_collection"],
+        )
+
+    def load_latest(self) -> Optional[StoredDocument]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT value AS document_hash FROM app_state WHERE key = 'active_document_hash'"
+            ).fetchone()
+        return self.load(row["document_hash"]) if row else None
+
+    def deactivate(self) -> None:
+        """Clear the active selection without deleting any persisted document."""
+        with self._connect() as connection:
+            connection.execute(
+                "DELETE FROM app_state WHERE key = 'active_document_hash'"
+            )
+
+    def search_dense(
+        self,
+        document_hash: str,
+        index_signature: str,
+        collection_name: str,
+        query_embedding: list[float],
+        limit: int,
+    ) -> list[tuple[float, int]]:
+        if not collection_name:
+            return []
+        with self._lock:
+            points = self._client().query_points(
+                collection_name=collection_name,
+                query=query_embedding,
+                query_filter=self._filter(document_hash, index_signature),
+                limit=limit,
+                with_payload=True,
+            ).points
+        return [
+            (float(point.score), int(point.payload["chunk_number"]))
+            for point in points
+            if point.payload and "chunk_number" in point.payload
+        ]
+
+
 class DocumentIndex:
-    """An in-memory BM25 index plus the source PDF for on-demand vision."""
+    """Active BM25/vision cache backed by the persistent document store."""
 
     def __init__(self) -> None:
         self.filename = ""
+        self.document_hash = ""
         self.chunks: list[DocumentChunk] = []
         self.pdf_bytes = b""
         self.page_count = 0
@@ -274,6 +667,8 @@ class DocumentIndex:
         self._document_frequencies: Counter[str] = Counter()
         self._average_length = 0.0
         self._embeddings: list[list[float]] = []
+        self._dense_search: Optional[Callable[[list[float], int], list[tuple[float, int]]]] = None
+        self._persisted = False
         self._lock = threading.Lock()
 
     def replace(
@@ -285,6 +680,9 @@ class DocumentIndex:
         visual_pages: Optional[set[int]] = None,
         embeddings: Optional[list[list[float]]] = None,
         embedding_model: str = "",
+        document_hash: str = "",
+        dense_search: Optional[Callable[[list[float], int], list[tuple[float, int]]]] = None,
+        persisted: bool = False,
     ) -> None:
         if embeddings is not None and len(embeddings) != len(chunks):
             raise ValueError("Each document chunk must have exactly one embedding.")
@@ -298,6 +696,7 @@ class DocumentIndex:
         )
         with self._lock:
             self.filename = filename
+            self.document_hash = document_hash
             self.chunks = chunks
             self.pdf_bytes = pdf_bytes
             self.page_count = page_count
@@ -307,6 +706,8 @@ class DocumentIndex:
             self._document_frequencies = frequencies
             self._average_length = average_length
             self._embeddings = list(embeddings or [])
+            self._dense_search = dense_search
+            self._persisted = persisted
 
     def clear(self) -> None:
         self.replace("", [])
@@ -321,12 +722,18 @@ class DocumentIndex:
             return {
                 "loaded": bool(self.pdf_bytes or self.chunks),
                 "filename": self.filename,
+                "document_hash": self.document_hash,
                 "chunks": len(self.chunks),
                 "pages": self.page_count,
                 "visual_pages": len(self.visual_pages),
                 "parser": "PyMuPDF4LLM",
-                "retrieval": "Hybrid BM25 + embeddings" if self._embeddings else "BM25",
+                "retrieval": (
+                    "Hybrid BM25 + embeddings"
+                    if self._embeddings or self._dense_search
+                    else "BM25"
+                ),
                 "embedding_model": self.embedding_model,
+                "persisted": self._persisted,
             }
 
     def search(
@@ -369,6 +776,7 @@ class DocumentIndex:
             frequencies = self._document_frequencies.copy()
             average_length = self._average_length
             embeddings = list(self._embeddings)
+            dense_search = self._dense_search
         if not chunks or not average_length:
             return []
         if SUMMARY_RE.search(query):
@@ -412,10 +820,18 @@ class DocumentIndex:
 
         # Dense search catches paraphrases that share meaning but not exact words.
         dense_scores: list[tuple[float, int]] = []
-        if settings.search_method != "bm25" and query_embedding and len(embeddings) == len(chunks):
-            for index, embedding in enumerate(embeddings):
-                similarity = cosine_similarity(query_embedding, embedding)
-                dense_scores.append((similarity, index))
+        if settings.search_method != "bm25" and query_embedding:
+            if dense_search:
+                number_to_index = {chunk.number: index for index, chunk in enumerate(chunks)}
+                dense_scores = [
+                    (score, number_to_index[number])
+                    for score, number in dense_search(query_embedding, settings.hybrid_candidates)
+                    if number in number_to_index
+                ]
+            elif len(embeddings) == len(chunks):
+                for index, embedding in enumerate(embeddings):
+                    similarity = cosine_similarity(query_embedding, embedding)
+                    dense_scores.append((similarity, index))
             dense_scores.sort(reverse=True)
 
         # Reciprocal Rank Fusion combines two rankings without pretending their
@@ -464,48 +880,18 @@ class DocumentIndex:
         initial_rank = {index: rank for rank, index in enumerate(ranked_indices, start=1)}
         dense_rank = {index: rank for rank, (_, index) in enumerate(dense_scores, start=1)}
 
-        # The cross-encoder's absolute logits are not calibrated across models
-        # (or even across query domains), so use it for pairwise ordering and
-        # calibrate the final 0–1 relevance confidence with the absolute dense
-        # signal. This preserves a meaningful, fixed abstention threshold while
-        # RRF over initial, dense, and cross-encoder ranks provides the rerank.
+        # These gates have deliberately separate semantics. The maximum dense
+        # similarity is a query-level answerability signal; the cross-encoder
+        # score is a passage-level relevance signal. Weak dense candidates still
+        # reach the reranker, so the dense gate does not reduce candidate recall.
         dense_by_index = {index: score for score, index in dense_scores}
-        bm25_by_index = {index: score for score, index in bm25_scores}
-        if dense_by_index:
-            strongest_dense = max(dense_by_index.values())
-            denominator = max(1e-9, 1.0 - settings.embedding_min_similarity)
-            query_confidence = max(
-                0.0,
-                min(1.0, (strongest_dense - settings.embedding_min_similarity) / denominator),
-            )
-        else:
-            query_confidence = max(bm25_by_index.values(), default=0.0)
-
-        fused_reranker_scores: dict[int, float] = {}
-        for index in ranked_indices:
-            # Keep absolute confidence dominant; the small rank factor gives
-            # each returned item its own normalized post-rerank score.
-            rank_factor = 0.98 + 0.02 / initial_rank[index]
-            candidate_factors: list[float] = []
-            if dense_by_index and settings.embedding_min_similarity > 0:
-                candidate_factors.append(max(
-                    0.0,
-                    min(1.0, dense_by_index.get(index, -1.0) / settings.embedding_min_similarity),
-                ))
-            bm25_active = (
-                settings.search_method == "bm25"
-                or (settings.search_method == "hybrid" and settings.bm25_weight > 0)
-            )
-            if bm25_active and bm25_by_index:
-                if settings.bm25_min_relevance > 0:
-                    candidate_factors.append(max(
-                        0.0,
-                        min(1.0, bm25_by_index.get(index, 0.0) / settings.bm25_min_relevance),
-                    ))
-                else:
-                    candidate_factors.append(float(bm25_by_index.get(index, 0.0) > 0.0))
-            candidate_factor = max(candidate_factors, default=1.0)
-            fused_reranker_scores[index] = query_confidence * candidate_factor * rank_factor
+        if (
+            settings.search_method != "bm25"
+            and dense_by_index
+            and max(dense_by_index.values()) < settings.embedding_min_similarity
+        ):
+            return []
+        reranker_by_index = dict(zip(ranked_indices, reranker_scores))
 
         reranked_indices = sorted(
             ranked_indices,
@@ -513,13 +899,21 @@ class DocumentIndex:
                 1.0 / (settings.rrf_k + initial_rank[index])
                 + 4.0 / (settings.rrf_k + cross_rank[index])
                 + (1.0 / (settings.rrf_k + dense_rank[index]) if index in dense_rank else 0.0),
-                fused_reranker_scores[index],
+                reranker_by_index[index],
             ),
             reverse=True,
         )
         reranked_indices = [
             index for index in reranked_indices
-            if fused_reranker_scores[index] >= settings.min_score
+            if reranker_by_index[index] >= settings.min_score
+            and not (
+                dense_by_index
+                and (
+                    settings.search_method == "embedding"
+                    or (settings.search_method == "hybrid" and settings.bm25_weight == 0)
+                )
+                and dense_by_index.get(index, -1.0) < settings.embedding_min_similarity
+            )
         ]
         deduplicated_indices = deduplicate_ranked_candidates(
             reranked_indices,
@@ -527,7 +921,7 @@ class DocumentIndex:
             embeddings if len(embeddings) == len(chunks) else [],
         )
         return [
-            RankedChunk(chunks[index], fused_reranker_scores[index])
+            RankedChunk(chunks[index], reranker_by_index[index])
             for index in deduplicated_indices[:limit]
         ]
 
@@ -595,12 +989,28 @@ class DocumentIndex:
 
 
 DOCUMENT_INDEX = DocumentIndex()
+_DOCUMENT_STORE: Optional[PersistentDocumentStore] = None
+_DOCUMENT_STORE_LOCK = threading.Lock()
+_INGEST_LOCK = threading.RLock()
 _LOCAL_EMBEDDER = None
 _LOCAL_EMBEDDER_MODEL = ""
 _LOCAL_EMBEDDER_LOCK = threading.Lock()
 _LOCAL_RERANKER = None
 _LOCAL_RERANKER_MODEL = ""
 _LOCAL_RERANKER_LOCK = threading.Lock()
+
+
+def document_store() -> PersistentDocumentStore:
+    """Return the process-wide persistent store configured by RAG_DATA_DIR."""
+    global _DOCUMENT_STORE
+    with _DOCUMENT_STORE_LOCK:
+        if _DOCUMENT_STORE is None:
+            configured = os.getenv("RAG_DATA_DIR", "").strip()
+            data_dir = Path(configured).expanduser() if configured else DEFAULT_DATA_DIR
+            if not data_dir.is_absolute():
+                data_dir = ROOT / data_dir
+            _DOCUMENT_STORE = PersistentDocumentStore(data_dir.resolve())
+        return _DOCUMENT_STORE
 
 
 def load_env(path: Path = ROOT / ".env") -> None:
@@ -725,8 +1135,20 @@ def _text_is_contained(left: str, right: str) -> bool:
     shorter, longer = sorted((normalized_left, normalized_right), key=len)
     if len(shorter) < MIN_CONTAINMENT_CHARS:
         return False
-    longest_match = difflib.SequenceMatcher(None, shorter, longer, autojunk=False).find_longest_match()
-    return longest_match.size / len(shorter) >= TEXT_CONTAINMENT_THRESHOLD
+    if shorter in longer:
+        return True
+    # Match word sequences rather than individual characters. This preserves
+    # the intended literal-containment check while avoiding quadratic work on
+    # thousands of characters for every candidate pair.
+    shorter_words = shorter.split()
+    longer_words = longer.split()
+    longest_match = difflib.SequenceMatcher(
+        None, shorter_words, longer_words, autojunk=False
+    ).find_longest_match()
+    matched_chars = len(" ".join(
+        shorter_words[longest_match.a:longest_match.a + longest_match.size]
+    ))
+    return matched_chars / len(shorter) >= TEXT_CONTAINMENT_THRESHOLD
 
 
 def _has_enough_words_for_semantic_collapse(text: str) -> bool:
@@ -1291,7 +1713,7 @@ def embedding_config() -> tuple[str, str, str, str]:
     if provider == "local":
         return (
             provider,
-            os.getenv("LOCAL_EMBEDDING_MODEL", "BAAI/bge-m3"),
+            os.getenv("LOCAL_EMBEDDING_MODEL", DEFAULT_LOCAL_EMBEDDING_MODEL),
             "",
             "",
         )
@@ -1313,42 +1735,90 @@ def embedding_config() -> tuple[str, str, str, str]:
 
 
 def local_embedder(model_name: str):
-    """Load and cache one local FastEmbed text embedding model."""
+    """Load and cache one local text embedding model."""
     global _LOCAL_EMBEDDER, _LOCAL_EMBEDDER_MODEL
     with _LOCAL_EMBEDDER_LOCK:
         if _LOCAL_EMBEDDER is not None and _LOCAL_EMBEDDER_MODEL == model_name:
             return _LOCAL_EMBEDDER
         try:
-            from fastembed import TextEmbedding
+            if model_name == "google/embeddinggemma-2":
+                import torch
+                from sentence_transformers import SentenceTransformer
+
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                dtype = (
+                    torch.bfloat16
+                    if device == "cuda" and torch.cuda.is_bf16_supported()
+                    else torch.float32
+                )
+                _LOCAL_EMBEDDER = SentenceTransformer(
+                    model_name,
+                    cache_folder=str(ROOT / ".models"),
+                    device=device,
+                    model_kwargs={"torch_dtype": dtype},
+                    config_kwargs={"vision_config": None, "audio_config": None},
+                )
+            else:
+                from fastembed import TextEmbedding
+
+                _LOCAL_EMBEDDER = TextEmbedding(model_name=model_name, cache_dir=str(ROOT / ".models"))
         except ImportError as exc:
-            raise RuntimeError("fastembed is not installed. Run: pip install -r requirements.txt") from exc
-        try:
-            _LOCAL_EMBEDDER = TextEmbedding(model_name=model_name, cache_dir=str(ROOT / ".models"))
+            raise RuntimeError("Local embeddings are unavailable. Run: pip install -r requirements.txt") from exc
         except Exception as exc:
             raise RuntimeError(f"Could not load local embedding model {model_name!r}: {exc}") from exc
         _LOCAL_EMBEDDER_MODEL = model_name
         return _LOCAL_EMBEDDER
 
 
-def embed_texts(texts: list[str], batch_size: int = 64, kind: str = "passage") -> list[list[float]]:
-    """Embed text using BAAI/bge-m3 locally or configured cloud APIs."""
+def _normalized_vectors(vectors) -> list[list[float]]:
+    """Return JSON-safe, finite, unit-length embedding vectors."""
+    if hasattr(vectors, "tolist"):
+        vectors = vectors.tolist()
+    normalized: list[list[float]] = []
+    for vector in vectors:
+        values = vector.tolist() if hasattr(vector, "tolist") else list(vector)
+        magnitude = math.sqrt(sum(float(value) ** 2 for value in values))
+        if not magnitude or not math.isfinite(magnitude):
+            raise RuntimeError("Embedding model returned a non-finite or zero-length vector.")
+        normalized.append([float(value) / magnitude for value in values])
+    return normalized
+
+
+def embed_texts(texts: list[str], batch_size: Optional[int] = None, kind: str = "passage") -> list[list[float]]:
+    """Embed text using the configured local or cloud provider."""
     if not texts:
         return []
     provider, model, url, api_key = embedding_config()
     if provider == "local":
         embedder = local_embedder(model)
         try:
-            if hasattr(embedder, "encode"):
-                embeddings = embedder.encode(texts, batch_size=batch_size, normalize_embeddings=True)
-                return embeddings.tolist()
+            if model == "google/embeddinggemma-2":
+                effective_batch_size = batch_size or int(os.getenv(
+                    "LOCAL_EMBEDDING_BATCH_SIZE", str(EMBEDDINGGEMMA_BATCH_SIZE)
+                ))
+                method_name = "encode_query" if kind == "query" else "encode_document"
+                method = getattr(embedder, method_name, None)
+                kwargs = {
+                    "batch_size": effective_batch_size,
+                    "normalize_embeddings": True,
+                }
+                if method is None:
+                    method = embedder.encode
+                    kwargs["prompt_name"] = (
+                        EMBEDDINGGEMMA_QUERY_PROMPT if kind == "query"
+                        else EMBEDDINGGEMMA_DOCUMENT_PROMPT
+                    )
+                embeddings = method(texts, **kwargs)
+                return _normalized_vectors(embeddings)
             method = embedder.query_embed if kind == "query" else embedder.passage_embed
-            return [vector.tolist() for vector in method(texts)]
+            return _normalized_vectors(method(texts))
         except Exception as exc:
             raise RuntimeError(f"Local embedding generation failed: {exc}") from exc
     if not api_key:
         variable = "GEMINI_API_KEY" if provider == "gemini" else "OPENAI_API_KEY"
         raise RuntimeError(f"{variable} is required to create embeddings.")
     vectors: list[list[float]] = []
+    batch_size = batch_size or 64
     for offset in range(0, len(texts), batch_size):
         batch = [text.replace("\n", " ").strip() for text in texts[offset:offset + batch_size]]
         result = request_json(url, {"model": model, "input": batch}, api_key, f"{provider.title()} embeddings")
@@ -1365,11 +1835,67 @@ def embed_texts(texts: list[str], batch_size: int = 64, kind: str = "passage") -
         if len(batch_vectors) != len(batch) or not all(isinstance(vector, list) and vector for vector in batch_vectors):
             raise RuntimeError(f"The {provider.title()} embeddings API returned the wrong number of vectors.")
         vectors.extend(batch_vectors)
-    return vectors
+    return _normalized_vectors(vectors)
 
 
-def index_document(filename: str, pdf_bytes: bytes, settings: RagSettings) -> dict:
-    """Parse, chunk, embed, and atomically replace the active document."""
+def embedding_index_profile(provider: str, model: str) -> str:
+    """Version every choice that changes the embedding vector space."""
+    if provider == "local" and model == "google/embeddinggemma-2":
+        return (
+            f"{provider}:{model}:sentence-transformers:text-only:float32-or-bfloat16:"
+            f"{EMBEDDINGGEMMA_QUERY_PROMPT}:{EMBEDDINGGEMMA_DOCUMENT_PROMPT}:768:v1"
+        )
+    return f"{provider}:{model}:normalized:v1"
+
+
+def document_index_signature(settings: RagSettings, embedding_profile: str) -> str:
+    """Identify the derived index independently from the source PDF bytes."""
+    payload = {
+        "schema": INDEX_SCHEMA_VERSION,
+        "sentences_per_chunk": settings.sentences_per_chunk,
+        "overlap_sentences": settings.overlap_sentences,
+        "chunk_size_tokens": settings.chunk_size_tokens,
+        "chunk_overlap_tokens": settings.chunk_overlap_tokens,
+        "embedding_profile": embedding_profile or "bm25",
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def activate_stored_document(store: PersistentDocumentStore, stored: StoredDocument) -> dict:
+    """Make a persisted document the active in-process BM25/vision index."""
+    dense_search = None
+    if stored.vector_collection:
+        dense_search = lambda query, limit: store.search_dense(
+            stored.document_hash,
+            stored.index_signature,
+            stored.vector_collection,
+            query,
+            limit,
+        )
+    DOCUMENT_INDEX.replace(
+        stored.filename,
+        stored.chunks,
+        stored.pdf_bytes,
+        stored.page_count,
+        stored.visual_pages,
+        stored.embeddings or None,
+        stored.embedding_model,
+        document_hash=stored.document_hash,
+        dense_search=dense_search,
+        persisted=True,
+    )
+    return DOCUMENT_INDEX.status()
+
+
+def index_document(
+    filename: str,
+    pdf_bytes: bytes,
+    settings: RagSettings,
+    store: Optional[PersistentDocumentStore] = None,
+    document_hash: str = "",
+) -> dict:
+    """Parse, chunk, embed, persist, and atomically activate one document."""
     chunks, page_count, visual_pages = parse_pdf(pdf_bytes, settings)
     try:
         if settings.search_method == "bm25":
@@ -1377,12 +1903,37 @@ def index_document(filename: str, pdf_bytes: bytes, settings: RagSettings) -> di
             embedding_model = ""
         else:
             embeddings = embed_texts([chunk.text for chunk in chunks])
-            _, embedding_model, _, _ = embedding_config()
+            embedding_provider, embedding_model, _, _ = embedding_config()
     except RuntimeError:
         # Text extraction and BM25 remain fully usable when a local embedding
         # model is unavailable or only partially cached.
         embeddings = []
         embedding_model = ""
+    profile = embedding_index_profile(embedding_provider, embedding_model) if embedding_model else ""
+    index_signature = document_index_signature(settings, profile)
+    vector_collection = ""
+    dense_search = None
+    if store is not None:
+        document_hash = document_hash or hashlib.sha256(pdf_bytes).hexdigest()
+        vector_collection = store.save(
+            document_hash,
+            filename,
+            pdf_bytes,
+            chunks,
+            page_count,
+            visual_pages,
+            embeddings,
+            embedding_model,
+            index_signature,
+        )
+        if vector_collection:
+            dense_search = lambda query, limit: store.search_dense(
+                document_hash,
+                index_signature,
+                vector_collection,
+                query,
+                limit,
+            )
     DOCUMENT_INDEX.replace(
         filename,
         chunks,
@@ -1391,8 +1942,43 @@ def index_document(filename: str, pdf_bytes: bytes, settings: RagSettings) -> di
         visual_pages,
         embeddings or None,
         embedding_model,
+        document_hash=document_hash,
+        dense_search=dense_search,
+        persisted=store is not None,
     )
     return DOCUMENT_INDEX.status()
+
+
+def ingest_document(
+    filename: str,
+    pdf_bytes: bytes,
+    settings: RagSettings,
+    store: PersistentDocumentStore,
+) -> dict:
+    """Reuse an exact persisted PDF/index match or build it exactly once."""
+    with _INGEST_LOCK:
+        document_hash = hashlib.sha256(pdf_bytes).hexdigest()
+        if settings.search_method == "bm25":
+            requested_embedding_model = ""
+        else:
+            requested_provider, requested_embedding_model, _, _ = embedding_config()
+        requested_profile = (
+            embedding_index_profile(requested_provider, requested_embedding_model)
+            if requested_embedding_model else ""
+        )
+        requested_signature = document_index_signature(settings, requested_profile)
+        stored = store.load(document_hash, requested_signature)
+        if stored is not None:
+            status = activate_stored_document(store, stored)
+            return {**status, "deduplicated": True}
+        status = index_document(
+            filename,
+            pdf_bytes,
+            settings,
+            store=store,
+            document_hash=document_hash,
+        )
+        return {**status, "deduplicated": False}
 
 
 def clean_messages(messages: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -1654,7 +2240,7 @@ class ChatHandler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Unexpected server error."})
 
     def upload_document(self) -> None:
-        """Accept one raw PDF request body and replace the current in-memory index."""
+        """Persist one raw PDF request body and make its index active."""
         try:
             if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/pdf":
                 raise ValueError("Upload a PDF file.")
@@ -1665,7 +2251,10 @@ class ChatHandler(SimpleHTTPRequestHandler):
             filename = Path(filename).name[:120]
             pdf_bytes = self.rfile.read(length)
             settings = settings_from_header(self.headers.get("X-RAG-Settings"))
-            self.send_json(HTTPStatus.CREATED, index_document(filename, pdf_bytes, settings))
+            self.send_json(
+                HTTPStatus.CREATED,
+                ingest_document(filename, pdf_bytes, settings, document_store()),
+            )
         except (ValueError, UnicodeError) as exc:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
         except RuntimeError as exc:
@@ -1682,7 +2271,9 @@ class ChatHandler(SimpleHTTPRequestHandler):
             filename, pdf_bytes = DOCUMENT_INDEX.source()
             if not pdf_bytes:
                 raise ValueError("Upload a PDF before rebuilding its index.")
-            self.send_json(HTTPStatus.OK, index_document(filename, pdf_bytes, settings))
+            with _INGEST_LOCK:
+                status = index_document(filename, pdf_bytes, settings, store=document_store())
+            self.send_json(HTTPStatus.OK, status)
         except (ValueError, json.JSONDecodeError) as exc:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
         except RuntimeError as exc:
@@ -1693,11 +2284,33 @@ class ChatHandler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
             return
         DOCUMENT_INDEX.clear()
+        document_store().deactivate()
         self.send_json(HTTPStatus.OK, DOCUMENT_INDEX.status())
 
 
 def main() -> None:
     load_env()
+    store = document_store()
+    latest_document = store.load_latest()
+    if latest_document is not None:
+        configured_provider, configured_model, _, _ = embedding_config()
+        configured_profile = embedding_index_profile(configured_provider, configured_model)
+        configured_signature = document_index_signature(DEFAULT_SETTINGS, configured_profile)
+        if latest_document.index_signature != configured_signature:
+            print(
+                f"Reindexing {latest_document.filename} with {configured_model}; "
+                f"the stored index used {latest_document.embedding_model or 'BM25 only'} "
+                "or an incompatible embedding profile."
+            )
+            index_document(
+                latest_document.filename,
+                latest_document.pdf_bytes,
+                DEFAULT_SETTINGS,
+                store=store,
+                document_hash=latest_document.document_hash,
+            )
+        else:
+            activate_stored_document(store, latest_document)
     port = int(os.getenv("APP_PORT", "8000"))
     server = ThreadingHTTPServer(("127.0.0.1", port), ChatHandler)
     print(f"Chat app running at http://localhost:{port}")
@@ -1707,6 +2320,7 @@ def main() -> None:
         print("\nStopping server.")
     finally:
         server.server_close()
+        store.close()
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
 pymupdf4llm>=0.2,<1
 pymupdf-layout>=1.28,<2
 fastembed>=0.7,<1
+qdrant-client>=1.14,<2
+sentence-transformers>=6.1,<7
+transformers>=5,<6
+torchvision>=0.25,<1
