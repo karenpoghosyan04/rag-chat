@@ -1,2 +1,0 @@
-"""Deep Research Agent backend."""
-
