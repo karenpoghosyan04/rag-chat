@@ -1,0 +1,3130 @@
+{
+  "cases": 41,
+  "answerable_cases": 35,
+  "unanswerable_cases": 6,
+  "metrics": {
+    "recall@1": 0.6571428571428571,
+    "recall@2": 0.8571428571428571,
+    "recall@3": 0.9428571428571428,
+    "recall@4": 0.9428571428571428,
+    "recall@5": 0.9714285714285714,
+    "recall@6": 0.9714285714285714,
+    "recall@8": 0.9714285714285714,
+    "recall@12": 0.9714285714285714,
+    "hit_rate@1": 0.6571428571428571,
+    "hit_rate@2": 0.8571428571428571,
+    "hit_rate@3": 0.9428571428571428,
+    "hit_rate@4": 0.9428571428571428,
+    "hit_rate@5": 0.9714285714285714,
+    "hit_rate@6": 0.9714285714285714,
+    "hit_rate@8": 0.9714285714285714,
+    "hit_rate@12": 0.9714285714285714,
+    "precision@1": 0.6571428571428571,
+    "precision@2": 0.42857142857142855,
+    "precision@3": 0.31428571428571433,
+    "precision@4": 0.2357142857142857,
+    "precision@5": 0.1942857142857144,
+    "precision@6": 0.16190476190476194,
+    "precision@8": 0.12142857142857143,
+    "precision@12": 0.08095238095238097,
+    "mrr@12": 0.7914285714285713,
+    "no_answer_accuracy": 1.0,
+    "gated_false_positive_rate": 0.0,
+    "answerability_accuracy": 1.0,
+    "avg_unanswerable_chunks": 0.0,
+    "latency_ms_mean": 477.80092385464076,
+    "latency_ms_p50": 443.3277499920223,
+    "latency_ms_p95": 678.8018749793991
+  },
+  "production_gate": {
+    "targets": {
+      "recall@12": 0.85,
+      "no_answer_accuracy": 0.85
+    },
+    "ready": true
+  },
+  "details": [
+    {
+      "question": "Which design removes both recurrence and convolution from the sequence model?",
+      "expected": [
+        {
+          "page": 1,
+          "contains": "based solely on attention mechanisms"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.8254595547198468,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 2,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": true,
+          "reranker_score": 0.8589976549010845,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 3,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.7444101909761097,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 4,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.3380503411900896,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 5,
+          "chunk": 20,
+          "page": 7,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.6352130911894555,
+          "preview": "Convolutional layers are generally more expensive than recurrent layers, by a factor of k . Separable convolutions [6], however, decrease the complexity considerably, to O (k \u00b7 n \u00b7"
+        },
+        {
+          "rank": 6,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.7262450966183251,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 7,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.2991619233251812,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 8,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.20955953277945052,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        }
+      ]
+    },
+    {
+      "question": "What training advantage follows from replacing step-by-step state propagation?",
+      "expected": [
+        {
+          "page": 2,
+          "contains": "allows for significantly more parallelization"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": true,
+          "reranker_score": 0.6272764522687234,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 2,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.47362243845308083,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        },
+        {
+          "rank": 3,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.39800571598744633,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 4,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.4327604917208078,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 5,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.25605473326881933,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 6,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.22308176080743822,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 7,
+          "chunk": 4,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.21343434660747523,
+          "preview": "\u2217 Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and impl"
+        }
+      ]
+    },
+    {
+      "question": "How does the proposed system change the operation count needed to connect distant positions?",
+      "expected": [
+        {
+          "page": 2,
+          "contains": "reduced to a constant number of operations"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.6680029963033812,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 2,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": true,
+          "reranker_score": 0.731561821877913,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 3,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.4428488777355226,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 4,
+          "chunk": 4,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.35366125527393194,
+          "preview": "\u2217 Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and impl"
+        },
+        {
+          "rank": 5,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.41750381060780684,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 6,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.35053910201896105,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 7,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.3220844917722673,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 8,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.3247615773832235,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 9,
+          "chunk": 42,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.2231474900687725,
+          "preview": "Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015. - [38] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Mac"
+        }
+      ]
+    },
+    {
+      "question": "How deep is the repeated block on the input-processing side?",
+      "expected": [
+        {
+          "page": 3,
+          "contains": "stack of N = 6 identical layers"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": true,
+          "reranker_score": 0.6929744409761343,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 2,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.6421470867038205,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 3,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.5889572035738488,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 4,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.5699280536894796,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 5,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.6210353117518908,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 6,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.4291116960469933,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 7,
+          "chunk": 39,
+          "page": 10,
+          "page_end": 11,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.5426950121543102,
+          "preview": "- [2] Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio. Neural machine translation by jointly learning to align and translate. CoRR, abs/1409.0473, 2014. - [3] Denny Britz, Anna "
+        },
+        {
+          "rank": 8,
+          "chunk": 20,
+          "page": 7,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.235631743166805,
+          "preview": "Convolutional layers are generally more expensive than recurrent layers, by a factor of k . Separable convolutions [6], however, decrease the complexity considerably, to O (k \u00b7 n \u00b7"
+        },
+        {
+          "rank": 9,
+          "chunk": 42,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.44853426068238234,
+          "preview": "Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015. - [38] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Mac"
+        }
+      ]
+    },
+    {
+      "question": "What extra module lets the output stack consult the input stack?",
+      "expected": [
+        {
+          "page": 3,
+          "contains": "performs multi-head attention over the output of the encoder stack"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": true,
+          "reranker_score": 0.8412939281851721,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 2,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.723811165612972,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 3,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.758661529255762,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 4,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.6266240346070114,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 5,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.6947842924060275,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 6,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.3137799111786057,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 7,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.6715485861288931,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 8,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.6205397244116244,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 9,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.5601822022188061,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        }
+      ]
+    },
+    {
+      "question": "What mechanism stops a generated position from peeking at future outputs?",
+      "expected": [
+        {
+          "page": 3,
+          "contains": "prevent positions from attending to subsequent positions"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": true,
+          "reranker_score": 0.65071876859051,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 2,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.29168559831617347,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 3,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.26095566226726175,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 4,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.20615398375540045,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 5,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.27276574734243475,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 6,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.2502710195963374,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        }
+      ]
+    },
+    {
+      "question": "How are raw query-key products adjusted before normalization?",
+      "expected": [
+        {
+          "page": 4,
+          "contains": "divide each by [\u221a] dk"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": true,
+          "reranker_score": 0.5689355125695155,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        },
+        {
+          "rank": 2,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.4954523990398875,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        },
+        {
+          "rank": 3,
+          "chunk": 12,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.3757448012920827,
+          "preview": "Instead of performing a single attention function with d model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times"
+        },
+        {
+          "rank": 4,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.40108145410796897,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 5,
+          "chunk": 13,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.20706944783508816,
+          "preview": "4To illustrate why the dot products get large, assume that the components of q and k are independent random variables with mean 0 and variance 1. Then their dot product, q \u00b7 k =[\ufffd]"
+        },
+        {
+          "rank": 6,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.2696571027252301,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 7,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.22653094617438338,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 8,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.3129584402791398,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        }
+      ]
+    },
+    {
+      "question": "Why is an inverse square-root factor applied when key vectors are wide?",
+      "expected": [
+        {
+          "page": 4,
+          "contains": "dot products grow large in magnitude"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.3496333639390439,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        },
+        {
+          "rank": 2,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": true,
+          "reranker_score": 0.2858084889486359,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        },
+        {
+          "rank": 3,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.4114690451745714,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 4,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.5007588742876659,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 5,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.27983270861825016,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 6,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.28511899551770115,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 7,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.24735071495048067,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 8,
+          "chunk": 13,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.21288738614787742,
+          "preview": "4To illustrate why the dot products get large, assume that the components of q and k are independent random variables with mean 0 and variance 1. Then their dot product, q \u00b7 k =[\ufffd]"
+        },
+        {
+          "rank": 9,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.2408173973043426,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        }
+      ]
+    },
+    {
+      "question": "What capability is lost when all feature views are averaged into one focus operation?",
+      "expected": [
+        {
+          "page": 5,
+          "contains": "jointly attend to information from different representation subspaces"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": true,
+          "reranker_score": 0.7081318284186995,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 2,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.6685802868572284,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 3,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.616766360997604,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 4,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.5674960201536459,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 5,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.5864538550005116,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 6,
+          "chunk": 20,
+          "page": 7,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.4735154703314094,
+          "preview": "Convolutional layers are generally more expensive than recurrent layers, by a factor of k . Separable convolutions [6], however, decrease the complexity considerably, to O (k \u00b7 n \u00b7"
+        },
+        {
+          "rank": 7,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.40368239447882914,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        }
+      ]
+    },
+    {
+      "question": "How many simultaneous focus branches are used in the reported configuration?",
+      "expected": [
+        {
+          "page": 5,
+          "contains": "h = 8 parallel attention layers"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": true,
+          "reranker_score": 0.7883774637054536,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 2,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.6790492514411485,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 3,
+          "chunk": 4,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.6814314103808173,
+          "preview": "\u2217 Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and impl"
+        },
+        {
+          "rank": 4,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.6443765142586549,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 5,
+          "chunk": 20,
+          "page": 7,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.4580891847609085,
+          "preview": "Convolutional layers are generally more expensive than recurrent layers, by a factor of k . Separable convolutions [6], however, decrease the complexity considerably, to O (k \u00b7 n \u00b7"
+        },
+        {
+          "rank": 6,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.5254329789743131,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 7,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.21513061739003242,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 8,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.35907497191808924,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        }
+      ]
+    },
+    {
+      "question": "In how many distinct roles is the parallel focus mechanism deployed?",
+      "expected": [
+        {
+          "page": 5,
+          "contains": "multi-head attention in three different ways"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.8485938459177262,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 2,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": true,
+          "reranker_score": 0.8352869817988218,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 3,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.852775348376548,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 4,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.7688011691335778,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 5,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.7508902867294658,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 6,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.6463246021323923,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        },
+        {
+          "rank": 7,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.7233378587364684,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 8,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.7898696819439215,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        }
+      ]
+    },
+    {
+      "question": "What is the hidden width of the position-local nonlinear subnetwork?",
+      "expected": [
+        {
+          "page": 5,
+          "contains": "inner-layer has dimensionality dff = 2048"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": true,
+          "reranker_score": 0.6897639671550988,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 2,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.6735389623768531,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 3,
+          "chunk": 28,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.6398282034514896,
+          "preview": "5We used values of 2.8, 3.7, 6.0 and 9.5 TFLOPS for K80, K40, M40 and P100, respectively."
+        },
+        {
+          "rank": 4,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.49355412457760955,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 5,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.5515438958857992,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 6,
+          "chunk": 34,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.2215248666114354,
+          "preview": "||N<br>_d_model<br>_d_ff<br>h<br>dk<br>dv<br>Pdrop<br>\u03f5ls<br>train<br>steps|PPL<br>BLEU<br>params<br>(dev)<br>(dev)<br>_\u00d7_106|\n|---|---|---|\n|base|6<br>512<br>2048<br>8<br>64<br>64"
+        },
+        {
+          "rank": 7,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.4082441805539562,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 8,
+          "chunk": 21,
+          "page": 7,
+          "page_end": 7,
+          "section": "5 Training",
+          "relevant": false,
+          "reranker_score": 0.21623999060258958,
+          "preview": "This section describes the training regime for our models."
+        },
+        {
+          "rank": 9,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.4384228083537611,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        }
+      ]
+    },
+    {
+      "question": "Which parameters are tied across token input, token output, and final prediction?",
+      "expected": [
+        {
+          "page": 5,
+          "contains": "share the same weight matrix"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": true,
+          "reranker_score": 0.7904911713220224,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 2,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.2694183931964759,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 3,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.40340672417777057,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 4,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.2252269906573472,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 5,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.6855089716247775,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 6,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.22876508979679455,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        }
+      ]
+    },
+    {
+      "question": "How does the model represent ordering despite lacking sequential or spatial filters?",
+      "expected": [
+        {
+          "page": 6,
+          "contains": "inject some information about the relative or absolute position"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.6197381035180572,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 2,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": true,
+          "reranker_score": 0.4650604689304077,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 3,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.5928001332849457,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 4,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.43609351203900726,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 5,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.3974765348804035,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 6,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.38473674414939346,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        },
+        {
+          "rank": 7,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.36656331559067884,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 8,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.28461444964645627,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 9,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.2725964210884669,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        }
+      ]
+    },
+    {
+      "question": "Why did the authors favor fixed trigonometric location signals over learned ones?",
+      "expected": [
+        {
+          "page": 6,
+          "contains": "extrapolate to sequence lengths longer than the ones encountered during training"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": true,
+          "reranker_score": 0.7414054850219197,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 2,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.5997347438837863,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 3,
+          "chunk": 12,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.2002538356059772,
+          "preview": "Instead of performing a single attention function with d model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times"
+        },
+        {
+          "rank": 4,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.267510979625296,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 5,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.2197596521418598,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 6,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.2870409495719034,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 7,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.23233436216264547,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        }
+      ]
+    },
+    {
+      "question": "Which layer family offers direct all-to-all communication without serial steps?",
+      "expected": [
+        {
+          "page": 6,
+          "contains": "connects all positions with a constant number of sequentially executed operations"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": true,
+          "reranker_score": 0.5545224264631027,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 2,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.32179029285583427,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 3,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.42727377419039336,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 4,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.2921217275489332,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 5,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.2595929161934821,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 6,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.2107156656373828,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        }
+      ]
+    },
+    {
+      "question": "Under what size relationship is global token interaction cheaper than recurrence?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "length n is smaller than the representation dimensionality d"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": true,
+          "reranker_score": 0.7392797600826877,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 2,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.5454717301615132,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 3,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.8035000299110979,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 4,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.4244548245440727,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 5,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.46615310588942305,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        },
+        {
+          "rank": 6,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.27853796980475826,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 7,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.3339230832396136,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        }
+      ]
+    },
+    {
+      "question": "What connectivity penalty comes from limiting each token to a local neighborhood?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "increase the maximum path length to O (n/r)"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": true,
+          "reranker_score": 0.8121369888709633,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 2,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.8088599594696645,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 3,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.23440172535425235,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 4,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.2975835189392144,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 5,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.34881826362855517,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        }
+      ]
+    },
+    {
+      "question": "What qualitative linguistic patterns emerged when inspecting the learned focus maps?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "behavior related to the syntactic and semantic structure"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 20,
+          "page": 7,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": true,
+          "reranker_score": 0.7572420006428723,
+          "preview": "Convolutional layers are generally more expensive than recurrent layers, by a factor of k . Separable convolutions [6], however, decrease the complexity considerably, to O (k \u00b7 n \u00b7"
+        },
+        {
+          "rank": 2,
+          "chunk": 43,
+          "page": 13,
+          "page_end": 14,
+          "section": "Attention Visualizations",
+          "relevant": false,
+          "reranker_score": 0.6842961913186028,
+          "preview": "----- Start of picture text -----<br>\nIt is in this spirit that a majority of American governments have passed new laws since 2009 making the registration or voting process more di"
+        },
+        {
+          "rank": 3,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.5992697927601704,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 4,
+          "chunk": 12,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.40888568313138846,
+          "preview": "Instead of performing a single attention function with d model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times"
+        },
+        {
+          "rank": 5,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.6813088254112756,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 6,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.6584777146903895,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        },
+        {
+          "rank": 7,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.3389431399135437,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        },
+        {
+          "rank": 8,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.39452895466191024,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        },
+        {
+          "rank": 9,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.2670781044322843,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        }
+      ]
+    },
+    {
+      "question": "Contrast the amount of bilingual training material used for the two translation directions.",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "about 4.5 million sentence pairs"
+        },
+        {
+          "page": 7,
+          "contains": "consisting of 36M sentences"
+        }
+      ],
+      "first_relevant_rank": 3,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.34675223878942274,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 2,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.4494050306166662,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 3,
+          "chunk": 22,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.1 Training Data and Batching",
+          "relevant": true,
+          "reranker_score": 0.33088362582324815,
+          "preview": "We trained on the standard WMT 2014 English-German dataset consisting of about 4.5 million sentence pairs. Sentences were encoded using byte-pair encoding [3], which has a shared s"
+        },
+        {
+          "rank": 4,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.33413131950200053,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 5,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.20312583469452522,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 6,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.3024124582981101,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 7,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.2029055645890992,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        }
+      ]
+    },
+    {
+      "question": "Roughly how many source and target units were packed into one optimization batch?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "approximately 25000 source tokens and 25000 target tokens"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 22,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.1 Training Data and Batching",
+          "relevant": true,
+          "reranker_score": 0.6154142492764291,
+          "preview": "We trained on the standard WMT 2014 English-German dataset consisting of about 4.5 million sentence pairs. Sentences were encoded using byte-pair encoding [3], which has a shared s"
+        },
+        {
+          "rank": 2,
+          "chunk": 23,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.2 Hardware and Schedule",
+          "relevant": false,
+          "reranker_score": 0.2064783167573329,
+          "preview": "We trained our models on one machine with 8 NVIDIA P100 GPUs. For our base models using the hyperparameters described throughout the paper, each training step took about 0.4 second"
+        },
+        {
+          "rank": 3,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.3268424749216038,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        },
+        {
+          "rank": 4,
+          "chunk": 40,
+          "page": 11,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.23095647561042343,
+          "preview": "In Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing, pages 832\u2013841. ACL, August 2009. - [15] Rafal Jozefowicz, Oriol Vinyals, Mike Schuster, N"
+        }
+      ]
+    },
+    {
+      "question": "Compare the wall-clock schedules for the smaller and larger configurations.",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "100,000 steps or 12 hours"
+        },
+        {
+          "page": 7,
+          "contains": "300,000 steps (3.5 days)"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 23,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.2 Hardware and Schedule",
+          "relevant": true,
+          "reranker_score": 0.4845783094959047,
+          "preview": "We trained our models on one machine with 8 NVIDIA P100 GPUs. For our base models using the hyperparameters described throughout the paper, each training step took about 0.4 second"
+        },
+        {
+          "rank": 2,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.5749440736147641,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 3,
+          "chunk": 21,
+          "page": 7,
+          "page_end": 7,
+          "section": "5 Training",
+          "relevant": false,
+          "reranker_score": 0.29889633073735083,
+          "preview": "This section describes the training regime for our models."
+        },
+        {
+          "rank": 4,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.35751135990200195,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 5,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.26549914184497037,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 6,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.2426755252114822,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 7,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.2966660695274611,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        }
+      ]
+    },
+    {
+      "question": "Which optimizer coefficients were selected for first moment, second moment, and numerical stability?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "\u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9]"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": true,
+          "reranker_score": 0.6364739309699897,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 2,
+          "chunk": 28,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.34802532051988333,
+          "preview": "5We used values of 2.8, 3.7, 6.0 and 9.5 TFLOPS for K80, K40, M40 and P100, respectively."
+        },
+        {
+          "rank": 3,
+          "chunk": 4,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.34268876099412515,
+          "preview": "\u2217 Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and impl"
+        },
+        {
+          "rank": 4,
+          "chunk": 23,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.2 Hardware and Schedule",
+          "relevant": false,
+          "reranker_score": 0.3374868330265763,
+          "preview": "We trained our models on one machine with 8 NVIDIA P100 GPUs. For our base models using the hyperparameters described throughout the paper, each training step took about 0.4 second"
+        },
+        {
+          "rank": 5,
+          "chunk": 34,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.22263068679235248,
+          "preview": "||N<br>_d_model<br>_d_ff<br>h<br>dk<br>dv<br>Pdrop<br>\u03f5ls<br>train<br>steps|PPL<br>BLEU<br>params<br>(dev)<br>(dev)<br>_\u00d7_106|\n|---|---|---|\n|base|6<br>512<br>2048<br>8<br>64<br>64"
+        },
+        {
+          "rank": 6,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.3098093559021975,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 7,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.22500448730995573,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        },
+        {
+          "rank": 8,
+          "chunk": 7,
+          "page": 2,
+          "page_end": 2,
+          "section": "2 Background",
+          "relevant": false,
+          "reranker_score": 0.2273125360186469,
+          "preview": "The goal of reducing sequential computation also forms the foundation of the Extended Neural GPU [16], ByteNet [18] and ConvS2S [9], all of which use convolutional neural networks "
+        },
+        {
+          "rank": 9,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.20804040726615164,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        }
+      ]
+    },
+    {
+      "question": "When does the learning-rate ramp stop and inverse-root decay begin?",
+      "expected": [
+        {
+          "page": 7,
+          "contains": "warmup steps_ = 4000"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": true,
+          "reranker_score": 0.5404116103426329,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 2,
+          "chunk": 39,
+          "page": 10,
+          "page_end": 11,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.2638130379614269,
+          "preview": "- [2] Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio. Neural machine translation by jointly learning to align and translate. CoRR, abs/1409.0473, 2014. - [3] Denny Britz, Anna "
+        },
+        {
+          "rank": 3,
+          "chunk": 34,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.21984426608538749,
+          "preview": "||N<br>_d_model<br>_d_ff<br>h<br>dk<br>dv<br>Pdrop<br>\u03f5ls<br>train<br>steps|PPL<br>BLEU<br>params<br>(dev)<br>(dev)<br>_\u00d7_106|\n|---|---|---|\n|base|6<br>512<br>2048<br>8<br>64<br>64"
+        },
+        {
+          "rank": 4,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.21768428730220282,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 5,
+          "chunk": 21,
+          "page": 7,
+          "page_end": 7,
+          "section": "5 Training",
+          "relevant": false,
+          "reranker_score": 0.2129626434269359,
+          "preview": "This section describes the training regime for our models."
+        },
+        {
+          "rank": 6,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.22323551574283212,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 7,
+          "chunk": 5,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.20797218311841315,
+          "preview": "31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA."
+        }
+      ]
+    },
+    {
+      "question": "For the larger translation configuration, report German and French quality together with compute cost.",
+      "expected": [
+        {
+          "page": 8,
+          "contains": "state-of-the-art BLEU score of 28.4"
+        },
+        {
+          "page": 8,
+          "contains": "big model achieves a BLEU score of 41.0"
+        },
+        {
+          "page": 8,
+          "contains": "Training took 3.5 days on 8 P100 GPUs"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": true,
+          "reranker_score": 0.8709060286313575,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 2,
+          "chunk": 22,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.1 Training Data and Batching",
+          "relevant": false,
+          "reranker_score": 0.306750932738053,
+          "preview": "We trained on the standard WMT 2014 English-German dataset consisting of about 4.5 million sentence pairs. Sentences were encoded using byte-pair encoding [3], which has a shared s"
+        },
+        {
+          "rank": 3,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.6954390012501793,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 4,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.2867714006972087,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 5,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.2822606188853866,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 6,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.21188200109504257,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 7,
+          "chunk": 11,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.1 Scaled Dot-Product Attention",
+          "relevant": false,
+          "reranker_score": 0.208597539325889,
+          "preview": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv . We compute the dot "
+        }
+      ]
+    },
+    {
+      "question": "By what margin did the strongest German system beat previously published alternatives?",
+      "expected": [
+        {
+          "page": 8,
+          "contains": "outperforms the best previously reported models (including ensembles) by more than 2.0 BLEU"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": true,
+          "reranker_score": 0.3794395319070318,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 2,
+          "chunk": 32,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.23275652290030735,
+          "preview": "All metrics are on the English-to-German translation development set, newstest2013. Listed perplexities are per-wordpiece, according to our byte-pair encoding, and should not be co"
+        },
+        {
+          "rank": 3,
+          "chunk": 42,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.22948923651481368,
+          "preview": "Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015. - [38] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Mac"
+        }
+      ]
+    },
+    {
+      "question": "How did checkpoint aggregation differ between the compact and expanded systems?",
+      "expected": [
+        {
+          "page": 8,
+          "contains": "averaging the last 5 checkpoints"
+        },
+        {
+          "page": 8,
+          "contains": "averaged the last 20 checkpoints"
+        }
+      ],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.3048692498594471,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 2,
+          "chunk": 41,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.22928019918643172,
+          "preview": "ACL, June 2006. - [27] Ankur Parikh, Oscar T\u00e4ckstr\u00f6m, Dipanjan Das, and Jakob Uszkoreit. A decomposable attention model. In Empirical Methods in Natural Language Processing, 2016. "
+        },
+        {
+          "rank": 3,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.21947991208972417,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        }
+      ]
+    },
+    {
+      "question": "What decoding breadth and length adjustment were used for translation?",
+      "expected": [
+        {
+          "page": 8,
+          "contains": "beam size of 4 and length penalty \u03b1 = 0.6"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": true,
+          "reranker_score": 0.46686831989797667,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 2,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": false,
+          "reranker_score": 0.5508843820866897,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        },
+        {
+          "rank": 3,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.6655903478146216,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 4,
+          "chunk": 22,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.1 Training Data and Batching",
+          "relevant": false,
+          "reranker_score": 0.32866001266867195,
+          "preview": "We trained on the standard WMT 2014 English-German dataset consisting of about 4.5 million sentence pairs. Sentences were encoded using byte-pair encoding [3], which has a shared s"
+        },
+        {
+          "rank": 5,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.5901334389334018,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 6,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.2346198760594429,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 7,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.32758374271304114,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 8,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.2068713786261365,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 9,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.24079298846105637,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        }
+      ]
+    },
+    {
+      "question": "What happened to translation quality when the architecture used only one focus branch?",
+      "expected": [
+        {
+          "page": 9,
+          "contains": "single-head attention is 0.9 BLEU worse than the best setting"
+        }
+      ],
+      "first_relevant_rank": 3,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.6888065100100342,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 2,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.5394537105538979,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 3,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": true,
+          "reranker_score": 0.3175983354885548,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 4,
+          "chunk": 30,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.23057578545060592,
+          "preview": "Table 3: Variations on the Transformer architecture. Unlisted values are identical to those of the base model. All metrics are on the English-to-German translation development set,"
+        },
+        {
+          "rank": 5,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.26585753125793976,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 6,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.4474108878956779,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 7,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.22518536859083343,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 8,
+          "chunk": 9,
+          "page": 3,
+          "page_end": 3,
+          "section": "3.1 Encoder and Decoder Stacks",
+          "relevant": false,
+          "reranker_score": 0.22574992505757102,
+          "preview": "Encoder: The encoder is composed of a stack of N = 6 identical layers. Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple"
+        }
+      ]
+    },
+    {
+      "question": "What do the ablations say about capacity and regularization?",
+      "expected": [
+        {
+          "page": 9,
+          "contains": "bigger models are better, and dropout is very helpful in avoiding over-fitting"
+        }
+      ],
+      "first_relevant_rank": 5,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.5017837461779532,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 2,
+          "chunk": 24,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.3 Optimizer",
+          "relevant": false,
+          "reranker_score": 0.3295630618135556,
+          "preview": "We used the Adam optimizer [20] with \u03b2 1 = 0.9, \u03b2 2 = 0.98 and \u03f5 = 10 [\u2212][9] . We varied the learning rate over the course of training, according to the formula: Formula: lrate = d"
+        },
+        {
+          "rank": 3,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.3549182718603056,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 4,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.27662216007833507,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 5,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": true,
+          "reranker_score": 0.24084592728098286,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 6,
+          "chunk": 14,
+          "page": 4,
+          "page_end": 5,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.30571187754308554,
+          "preview": "4 output values. These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2. Multi-head attention allows the model to jointly attend to"
+        },
+        {
+          "rank": 7,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.2184174159204913,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 8,
+          "chunk": 30,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.20682600464288395,
+          "preview": "Table 3: Variations on the Transformer architecture. Unlisted values are identical to those of the base model. All metrics are on the English-to-German translation development set,"
+        }
+      ]
+    },
+    {
+      "question": "Did trainable location vectors materially outperform the fixed periodic scheme?",
+      "expected": [
+        {
+          "page": 9,
+          "contains": "observe nearly identical results to the base model"
+        }
+      ],
+      "first_relevant_rank": 3,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 18,
+          "page": 6,
+          "page_end": 6,
+          "section": "3.5 Positional Encoding",
+          "relevant": false,
+          "reranker_score": 0.8387027279720278,
+          "preview": "Since our model contains no recurrence and no convolution, in order for the model to make use of the order of the sequence, we must inject some information about the relative or ab"
+        },
+        {
+          "rank": 2,
+          "chunk": 34,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.5639046777300555,
+          "preview": "||N<br>_d_model<br>_d_ff<br>h<br>dk<br>dv<br>Pdrop<br>\u03f5ls<br>train<br>steps|PPL<br>BLEU<br>params<br>(dev)<br>(dev)<br>_\u00d7_106|\n|---|---|---|\n|base|6<br>512<br>2048<br>8<br>64<br>64"
+        },
+        {
+          "rank": 3,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": true,
+          "reranker_score": 0.7683135698770218,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 4,
+          "chunk": 12,
+          "page": 4,
+          "page_end": 4,
+          "section": "3.2.2 Multi-Head Attention",
+          "relevant": false,
+          "reranker_score": 0.4900841909731397,
+          "preview": "Instead of performing a single attention function with d model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times"
+        },
+        {
+          "rank": 5,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.5480975552213753,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 6,
+          "chunk": 33,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.4958577279549896,
+          "preview": "Listed perplexities are per-wordpiece, according to our byte-pair encoding, and should not be compared to per-word perplexities."
+        },
+        {
+          "rank": 7,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.5095826470676781,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 8,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.36414029476544907,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        }
+      ]
+    },
+    {
+      "question": "How much labeled and automatically labeled data supported the grammar experiments?",
+      "expected": [
+        {
+          "page": 9,
+          "contains": "about 40K training sentences"
+        },
+        {
+          "page": 9,
+          "contains": "approximately 17M sentences"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 22,
+          "page": 7,
+          "page_end": 7,
+          "section": "5.1 Training Data and Batching",
+          "relevant": false,
+          "reranker_score": 0.46800993408084895,
+          "preview": "We trained on the standard WMT 2014 English-German dataset consisting of about 4.5 million sentence pairs. Sentences were encoded using byte-pair encoding [3], which has a shared s"
+        },
+        {
+          "rank": 2,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": true,
+          "reranker_score": 0.3901162562937697,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 3,
+          "chunk": 42,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.293709672389514,
+          "preview": "Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015. - [38] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Mac"
+        },
+        {
+          "rank": 4,
+          "chunk": 1,
+          "page": 1,
+          "page_end": 1,
+          "section": "",
+          "relevant": false,
+          "reranker_score": 0.2719270664443625,
+          "preview": "Provided proper attribution is provided, Google hereby grants permission to reproduce the tables and figures in this paper solely for use in journalistic or scholarly works."
+        },
+        {
+          "rank": 5,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.21577615299260966,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 6,
+          "chunk": 40,
+          "page": 11,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.24017561531565243,
+          "preview": "In Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing, pages 832\u2013841. ACL, August 2009. - [15] Rafal Jozefowicz, Oriol Vinyals, Mike Schuster, N"
+        },
+        {
+          "rank": 7,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.21120964381799676,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        }
+      ]
+    },
+    {
+      "question": "What score did the semi-supervised four-layer system obtain on the treebank test split?",
+      "expected": [
+        {
+          "page": 10,
+          "contains": "|Transformer(4 layers)|semi-supervised|92.7|"
+        }
+      ],
+      "first_relevant_rank": 2,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.7376515505231348,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 2,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": true,
+          "reranker_score": 0.5301942258991789,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 3,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.23907785670622012,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        },
+        {
+          "rank": 4,
+          "chunk": 3,
+          "page": 1,
+          "page_end": 1,
+          "section": "Abstract",
+          "relevant": false,
+          "reranker_score": 0.22438730808277238,
+          "preview": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also con"
+        },
+        {
+          "rank": 5,
+          "chunk": 25,
+          "page": 7,
+          "page_end": 8,
+          "section": "5.4 Regularization",
+          "relevant": false,
+          "reranker_score": 0.2610413567439478,
+          "preview": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and E"
+        },
+        {
+          "rank": 6,
+          "chunk": 34,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.2205542950528679,
+          "preview": "||N<br>_d_model<br>_d_ff<br>h<br>dk<br>dv<br>Pdrop<br>\u03f5ls<br>train<br>steps|PPL<br>BLEU<br>params<br>(dev)<br>(dev)<br>_\u00d7_106|\n|---|---|---|\n|base|6<br>512<br>2048<br>8<br>64<br>64"
+        },
+        {
+          "rank": 7,
+          "chunk": 40,
+          "page": 11,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.22181418868415678,
+          "preview": "In Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing, pages 832\u2013841. ACL, August 2009. - [15] Rafal Jozefowicz, Oriol Vinyals, Mike Schuster, N"
+        },
+        {
+          "rank": 8,
+          "chunk": 42,
+          "page": 12,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.24647675113371914,
+          "preview": "Grammar as a foreign language. In Advances in Neural Information Processing Systems, 2015. - [38] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V Le, Mohammad Norouzi, Wolfgang Mac"
+        }
+      ]
+    },
+    {
+      "question": "How was search configured when producing parse trees?",
+      "expected": [
+        {
+          "page": 10,
+          "contains": "beam size of 21 and \u03b1 = 0.3"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 37,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": true,
+          "reranker_score": 0.21790979478203962,
+          "preview": "During inference, we 9 Table 4: The Transformer generalizes well to English constituency parsing (Results are on Section 23 of WSJ) |Parser|Training|WSJ 23 F1|\n|---|---|---|\n|Vinya"
+        },
+        {
+          "rank": 2,
+          "chunk": 35,
+          "page": 9,
+          "page_end": 9,
+          "section": "6.2 Model Variations",
+          "relevant": false,
+          "reranker_score": 0.21481436752757302,
+          "preview": "development set, newstest2013. We used beam search as described in the previous section, but no checkpoint averaging. We present these results in Table 3. In Table 3 rows (A), we v"
+        },
+        {
+          "rank": 3,
+          "chunk": 40,
+          "page": 11,
+          "page_end": 12,
+          "section": "References",
+          "relevant": false,
+          "reranker_score": 0.2121480543545111,
+          "preview": "In Proceedings of the 2009 Conference on Empirical Methods in Natural Language Processing, pages 832\u2013841. ACL, August 2009. - [15] Rafal Jozefowicz, Oriol Vinyals, Mike Schuster, N"
+        },
+        {
+          "rank": 4,
+          "chunk": 26,
+          "page": 8,
+          "page_end": 8,
+          "section": "6.1 Machine Translation",
+          "relevant": false,
+          "reranker_score": 0.209288761368671,
+          "preview": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) b"
+        }
+      ]
+    },
+    {
+      "question": "Which non-text input and output domains are identified as future extensions?",
+      "expected": [
+        {
+          "page": 10,
+          "contains": "images, audio and video"
+        }
+      ],
+      "first_relevant_rank": 1,
+      "unanswerable_outcome": null,
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk": 38,
+          "page": 10,
+          "page_end": 10,
+          "section": "7 Conclusion",
+          "relevant": true,
+          "reranker_score": 0.4884510319759799,
+          "preview": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder "
+        },
+        {
+          "rank": 2,
+          "chunk": 6,
+          "page": 2,
+          "page_end": 2,
+          "section": "1 Introduction",
+          "relevant": false,
+          "reranker_score": 0.30168536412946967,
+          "preview": "Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequenc"
+        },
+        {
+          "rank": 3,
+          "chunk": 19,
+          "page": 6,
+          "page_end": 7,
+          "section": "4 Why Self-Attention",
+          "relevant": false,
+          "reranker_score": 0.3919533616844639,
+          "preview": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol repre"
+        },
+        {
+          "rank": 4,
+          "chunk": 16,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.3 Position-wise Feed-Forward Networks",
+          "relevant": false,
+          "reranker_score": 0.4269032674130318,
+          "preview": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and"
+        },
+        {
+          "rank": 5,
+          "chunk": 17,
+          "page": 5,
+          "page_end": 6,
+          "section": "3.4 Embeddings and Softmax",
+          "relevant": false,
+          "reranker_score": 0.4234050355299477,
+          "preview": "Similarly to other sequence transduction models, we use learned embeddings to convert the input tokens and output tokens to vectors of dimension d model. We also use the usual lear"
+        },
+        {
+          "rank": 6,
+          "chunk": 36,
+          "page": 9,
+          "page_end": 10,
+          "section": "6.3 English Constituency Parsing",
+          "relevant": false,
+          "reranker_score": 0.2309163332333902,
+          "preview": "To evaluate if the Transformer can generalize to other tasks we performed experiments on English constituency parsing. This task presents specific challenges: the output is subject"
+        },
+        {
+          "rank": 7,
+          "chunk": 8,
+          "page": 2,
+          "page_end": 3,
+          "section": "3 Model Architecture",
+          "relevant": false,
+          "reranker_score": 0.26462996675629086,
+          "preview": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x 1, ..., xn)"
+        },
+        {
+          "rank": 8,
+          "chunk": 10,
+          "page": 3,
+          "page_end": 4,
+          "section": "3.2 Attention",
+          "relevant": false,
+          "reranker_score": 0.2368400598404351,
+          "preview": "An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors. The output is comput"
+        },
+        {
+          "rank": 9,
+          "chunk": 15,
+          "page": 5,
+          "page_end": 5,
+          "section": "3.2.3 Applications of Attention in our Model",
+          "relevant": false,
+          "reranker_score": 0.22123889543768757,
+          "preview": "The Transformer uses multi-head attention in three different ways: - In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys an"
+        }
+      ]
+    },
+    {
+      "question": "What dosage of aspirin was administered in the clinical trial?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    },
+    {
+      "question": "Which Martian crater hosted the rover's soil experiment?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    },
+    {
+      "question": "How did the quarterly tax rate affect the company's dividend?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    },
+    {
+      "question": "What recipe temperature produced the crispest sourdough crust?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    },
+    {
+      "question": "Which encryption cipher protected the blockchain wallet?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    },
+    {
+      "question": "How many goals were scored in the championship football match?",
+      "expected": [],
+      "first_relevant_rank": null,
+      "unanswerable_outcome": "correct_rejection",
+      "retrieved": []
+    }
+  ],
+  "settings": {
+    "sentences_per_chunk": 4,
+    "overlap_sentences": 1,
+    "chunk_size_tokens": 512,
+    "chunk_overlap_tokens": 64,
+    "search_method": "hybrid",
+    "max_context_chunks": 3,
+    "bm25_min_relevance": 0.18,
+    "embedding_min_similarity": 0.63,
+    "min_score": 0.2,
+    "hybrid_candidates": 10,
+    "rrf_k": 60,
+    "bm25_weight": 0.75,
+    "embedding_weight": 0.25,
+    "enable_vision": true,
+    "max_vision_pages": 2,
+    "temperature": 0.2,
+    "max_output_tokens": 1200,
+    "history_messages": 30
+  },
+  "scope": "Uncached query embedding and reranking repeat on tuning labels; not an independent held-out test. PDF parsing and passage embeddings were reused from the fresh sweep."
+}

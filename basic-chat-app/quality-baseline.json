@@ -1,0 +1,10 @@
+{
+  "scope": "Source integrity, not measured accuracy",
+  "sha256": {
+    "app_logic_except_server_startup": "b70bed6f84a4c61a9714e263a68372ac5e6e910aa3abf9edef350da48475e8d8",
+    "eval_questions.jsonl": "e6a915e621c4657e57b742ff8beda1c5416d782b2df9af3fd2e6ad7dcdf36616",
+    "embedding-eval/frozen-corpus.json": "cb2874392a7585d9099e3dbe2bd3013381f5a164adc80e0dd33276155caa0a57",
+    "embedding-eval/new-model.index.npy": "b9535c224d2ae102bafb4948018e96ca7c2d5e4c15ae0c7fc20734e1644070ae",
+    "embedding-eval/calibration.json": "2f250532d1f7f292e998f8103f9d020723655ece3bac726b01c03c6f38c054df"
+  }
+}

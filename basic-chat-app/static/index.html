@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="A small Python and JavaScript chat app for learning how LLM APIs work." />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23151a22'/%3E%3Cpath d='M9 10.5h14v9H15l-5 4v-4H9z' fill='%237ee0bd'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/styles.css?v=20260930-1" />
+    <meta name="description" content="ContextFlow turns your PDFs into answers with page citations." />
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="icon" type="image/svg+xml" href="/brand/contextflow-mark.svg" />
+    <link rel="stylesheet" href="/styles.css?v=20261024-model-choice" />
     <script>
       window.MathJax = {
         loader: { load: ['ui/safe'] },
@@ -20,27 +21,35 @@
       }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
-    <title>Little LLM Chat</title>
+    <title>ContextFlow</title>
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div class="brand-mark" aria-hidden="true">L</div>
+        <img class="brand-mark" src="/brand/contextflow-mark.svg" alt="" width="48" height="48" />
         <div>
-          <h1>Little LLM Chat</h1>
-          <p>Layout-aware PDF RAG · on-demand figure vision</p>
+          <h1>ContextFlow</h1>
+          <p>Answers grounded in your PDFs</p>
         </div>
         <div class="topbar-actions">
           <div class="status" id="status"><span></span><span id="status-text">Checking setup</span></div>
-          <button class="settings-button" type="button" id="open-settings" aria-label="Open RAG settings">⚙ Settings</button>
+        </div>
+        <div class="model-control">
+          <label for="embedding-model">Document search</label>
+          <select id="embedding-model" aria-describedby="embedding-model-status" disabled>
+            <option value="google/embeddinggemma-2">Gemma · default</option>
+            <option value="BAAI/bge-small-en-v1.5">BGE · faster indexing</option>
+          </select>
+          <span id="embedding-model-status" role="status">Changing models rebuilds document search.</span>
         </div>
       </header>
 
       <section class="chat" id="chat" aria-live="polite" aria-label="Conversation">
         <div class="welcome" id="welcome">
-          <div class="spark">✦</div>
-          <h2>Ask your first question</h2>
-          <p>Upload a PDF, then ask about its text, tables, or figures. Relevant passages are retrieved locally; visual pages are rendered only when needed.</p>
+          <img class="welcome-mark" src="/brand/contextflow-mark.svg" alt="" width="96" height="96" />
+          <p class="welcome-brand">ContextFlow</p>
+          <h2>Your documents. In context.</h2>
+          <p>Add a PDF. Ask a question. Follow the sources.</p>
           <div class="suggestions">
             <button type="button" data-prompt="Summarize the main ideas in the uploaded PDF.">Summarize the PDF</button>
             <button type="button" data-prompt="What are the three most important facts in this document?">Find key facts</button>
@@ -57,7 +66,7 @@
           <button class="remove-document" type="button" id="remove-pdf" hidden aria-label="Remove PDF">Remove</button>
         </div>
         <label class="sr-only" for="message">Message</label>
-        <textarea id="message" rows="1" placeholder="Message the assistant…" maxlength="6000" required></textarea>
+        <textarea id="message" rows="1" placeholder="Ask ContextFlow about your PDF…" maxlength="6000" required></textarea>
         <button type="submit" id="send" aria-label="Send message">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Zm7 1 3-4" /></svg>
         </button>
@@ -65,104 +74,6 @@
       </form>
     </main>
 
-    <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
-      <form id="settings-form" method="dialog">
-        <header class="settings-header">
-          <div>
-            <h2 id="settings-title">RAG tuning</h2>
-            <p>Adjust retrieval and generation. Chunk changes rebuild the loaded PDF.</p>
-          </div>
-          <button class="dialog-close" type="button" id="close-settings" aria-label="Close settings">×</button>
-        </header>
-
-        <div class="settings-content">
-          <fieldset>
-            <legend>Chunking and context</legend>
-            <p class="settings-help">These two chunk controls require reindexing. Smaller windows are precise; larger windows preserve more surrounding context.</p>
-            <div class="settings-grid">
-              <label>Sentences per chunk
-                <input name="sentences_per_chunk" type="number" min="1" max="20" step="1" required />
-              </label>
-              <label>Overlapping sentences
-                <input name="overlap_sentences" type="number" min="0" max="19" step="1" required />
-              </label>
-              <label>Sources sent to model
-                <input name="max_context_chunks" type="number" min="1" max="12" step="1" required />
-              </label>
-              <label>Conversation messages
-                <input name="history_messages" type="number" min="1" max="30" step="1" required />
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Search and ranking</legend>
-            <label class="settings-wide">Search method
-              <select name="search_method">
-                <option value="hybrid">Hybrid — BM25 + embeddings</option>
-                <option value="embedding">Embeddings only</option>
-                <option value="bm25">BM25 only</option>
-              </select>
-            </label>
-            <div class="settings-grid">
-              <label>BM25 minimum relevance
-                <input name="bm25_min_relevance" type="number" min="0" max="2" step="0.01" required />
-                <small>Higher rejects more lexical matches.</small>
-              </label>
-              <label>Embedding similarity
-                <input name="embedding_min_similarity" type="number" min="-1" max="1" step="0.01" required />
-                <small>Higher rejects more semantic matches.</small>
-              </label>
-              <label>Minimum combined score
-                <input name="min_score" type="number" min="0" max="1" step="0.01" required />
-                <small>Return no context when the best fused candidate scores below this value.</small>
-              </label>
-              <label>Candidate pool per search
-                <input name="hybrid_candidates" type="number" min="1" max="100" step="1" required />
-              </label>
-              <label>RRF rank constant
-                <input name="rrf_k" type="number" min="1" max="200" step="1" required />
-                <small>Lower emphasizes top-ranked results.</small>
-              </label>
-              <label>BM25 fusion weight
-                <input name="bm25_weight" type="number" min="0" max="5" step="0.1" required />
-              </label>
-              <label>Embedding fusion weight
-                <input name="embedding_weight" type="number" min="0" max="5" step="0.1" required />
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Vision and answer generation</legend>
-            <div class="settings-grid">
-              <label class="checkbox-setting">
-                <input name="enable_vision" type="checkbox" />
-                <span>Analyze figures and charts</span>
-              </label>
-              <label>Maximum visual pages
-                <input name="max_vision_pages" type="number" min="0" max="4" step="1" required />
-              </label>
-              <label>Temperature
-                <input name="temperature" type="number" min="0" max="2" step="0.1" required />
-                <small>Lower is more consistent.</small>
-              </label>
-              <label>Maximum answer tokens
-                <input name="max_output_tokens" type="number" min="128" max="8192" step="1" required />
-              </label>
-            </div>
-            <p class="citation-lock">Citation enforcement is always enabled for PDF-grounded responses.</p>
-          </fieldset>
-          <p class="settings-error" id="settings-error" role="alert" hidden></p>
-        </div>
-
-        <footer class="settings-actions">
-          <button type="button" class="secondary-button" id="reset-settings">Reset defaults</button>
-          <span class="settings-summary" id="settings-summary"></span>
-          <button type="submit" class="primary-button">Apply settings</button>
-        </footer>
-      </form>
-    </dialog>
-    <script src="/app.js?v=20260930-1"></script>
+    <script src="/app.js?v=20261024-model-choice"></script>
   </body>
 </html>

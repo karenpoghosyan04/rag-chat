@@ -1,0 +1,5 @@
+-r requirements.txt
+numpy>=2,<3
+scikit-learn>=1.6,<2
+joblib>=1.4,<2
+jupyterlab>=4,<5

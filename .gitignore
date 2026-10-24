@@ -1,3 +1,14 @@
 .env
 .models/
 __pycache__/
+*.py[cod]
+.DS_Store
+:memory:.ses
+venv/
+.venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.chart-data-*/
+.contextflow-build/
+.rag-deck-build/
+/output/

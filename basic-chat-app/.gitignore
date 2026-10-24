@@ -4,3 +4,10 @@
 data/
 __pycache__/
 *.pyc
+artifacts/
+.ipynb_checkpoints/
+mlruns/
+mlflow.db*
+reports/tuning/score-cache.json
+reports/tuning/query-vectors.json
+reports/tuning/index-*.json

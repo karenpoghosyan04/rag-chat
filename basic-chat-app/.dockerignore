@@ -1,0 +1,10 @@
+.env
+.env.*
+.venv
+.models
+data
+artifacts
+__pycache__
+**/__pycache__
+*.joblib
+.git

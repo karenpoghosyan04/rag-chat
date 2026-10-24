@@ -24,7 +24,8 @@ import time
 import uuid
 from collections import Counter
 from contextlib import contextmanager
-from dataclasses import dataclass
+from contextvars import ContextVar
+from dataclasses import dataclass, replace
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -42,13 +43,12 @@ OPENAI_URL = "https://api.openai.com/v1/responses"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
 OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings"
 GEMINI_EMBEDDINGS_URL = "https://generativelanguage.googleapis.com/v1beta/openai/embeddings"
-MAX_PDF_BYTES = 10 * 1024 * 1024
-MAX_CONTEXT_CHUNKS = 4
+MAX_CONTEXT_CHUNKS = 3
 MAX_VISION_PAGES = 2
 SENTENCES_PER_CHUNK = 4
 CHUNK_OVERLAP_SENTENCES = 1
-CHUNK_SIZE_TOKENS = 1024
-CHUNK_OVERLAP_TOKENS = 0
+CHUNK_SIZE_TOKENS = 512
+CHUNK_OVERLAP_TOKENS = 64
 MIN_RELEVANCE = 0.18
 DEFAULT_LOCAL_EMBEDDING_MODEL = "google/embeddinggemma-2"
 EMBEDDINGGEMMA_QUERY_PROMPT = "SearchQuery"
@@ -56,7 +56,7 @@ EMBEDDINGGEMMA_DOCUMENT_PROMPT = "Document"
 EMBEDDINGGEMMA_BATCH_SIZE = 1
 MIN_EMBEDDING_SIMILARITY = 0.63
 MIN_RETRIEVAL_SCORE = 0.20
-HYBRID_CANDIDATES = 25
+HYBRID_CANDIDATES = 10
 RERANKER_MODEL = "jinaai/jina-reranker-v1-tiny-en"
 RRF_K = 60
 RANGE_OVERLAP_THRESHOLD = 0.40
@@ -124,7 +124,7 @@ SYSTEM_INSTRUCTIONS = (
 
 @dataclass(frozen=True)
 class RagSettings:
-    """Validated knobs exposed by the local tuning panel."""
+    """Runtime configuration with tuned defaults; also used by offline evaluation."""
 
     sentences_per_chunk: int = SENTENCES_PER_CHUNK
     overlap_sentences: int = CHUNK_OVERLAP_SENTENCES
@@ -137,8 +137,8 @@ class RagSettings:
     min_score: float = MIN_RETRIEVAL_SCORE
     hybrid_candidates: int = HYBRID_CANDIDATES
     rrf_k: int = RRF_K
-    bm25_weight: float = 1.0
-    embedding_weight: float = 1.0
+    bm25_weight: float = 0.75
+    embedding_weight: float = 0.25
     enable_vision: bool = True
     max_vision_pages: int = MAX_VISION_PAGES
     temperature: float = 0.2
@@ -227,6 +227,21 @@ class RagSettings:
 
 
 DEFAULT_SETTINGS = RagSettings()
+EMBEDDING_CHOICES = {
+    "google/embeddinggemma-2": "Gemma · default",
+    "BAAI/bge-small-en-v1.5": "BGE · faster indexing",
+}
+_SELECTED_EMBEDDING_MODEL: Optional[str] = None
+_EMBEDDING_OVERRIDE: ContextVar[Optional[str]] = ContextVar("embedding_override", default=None)
+
+
+def runtime_settings() -> RagSettings:
+    """Use each model's calibrated gate without changing offline eval defaults."""
+    model = embedding_config()[1]
+    if model == "BAAI/bge-small-en-v1.5":
+        return replace(DEFAULT_SETTINGS, embedding_min_similarity=0.555)
+    return DEFAULT_SETTINGS
+
 
 
 @dataclass(frozen=True)
@@ -344,6 +359,15 @@ class PersistentDocumentStore:
                     value TEXT NOT NULL
                 );
             """)
+
+    def selected_embedding_model(self) -> Optional[str]:
+        with self._connect() as connection:
+            row = connection.execute("SELECT value FROM app_state WHERE key = 'embedding_model'").fetchone()
+        return row["value"] if row and row["value"] in EMBEDDING_CHOICES else None
+
+    def select_embedding_model(self, model: str) -> None:
+        with self._connect() as connection:
+            connection.execute("INSERT OR REPLACE INTO app_state (key, value) VALUES ('embedding_model', ?)", (model,))
 
     def _client(self):
         if self._qdrant is None:
@@ -1025,17 +1049,6 @@ def load_env(path: Path = ROOT / ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
-def settings_from_header(value: Optional[str]) -> RagSettings:
-    """Decode URL-escaped JSON settings sent with a raw PDF upload."""
-    if not value:
-        return DEFAULT_SETTINGS
-    try:
-        data = json.loads(unquote(value))
-    except (json.JSONDecodeError, UnicodeError) as exc:
-        raise ValueError("X-RAG-Settings must contain valid URL-encoded JSON.") from exc
-    return RagSettings.from_dict(data)
-
-
 def tokenize(text: str) -> list[str]:
     """Return normalized terms for lightweight lexical retrieval."""
     return [
@@ -1455,7 +1468,7 @@ def structure_aware_chunks(
     sentences_per_chunk: int = SENTENCES_PER_CHUNK,
     overlap_sentences: int = CHUNK_OVERLAP_SENTENCES,
     chunk_size_tokens: int = 0,
-    chunk_overlap_tokens: int = CHUNK_OVERLAP_TOKENS,
+    chunk_overlap_tokens: int = 0,
 ) -> list[DocumentChunk]:
     """Create section-safe sentence windows, optionally bounded by estimated tokens."""
     if sentences_per_chunk < 1:
@@ -1709,6 +1722,9 @@ def request_json(url: str, payload: dict, api_key: str, provider_name: str) -> d
 
 def embedding_config() -> tuple[str, str, str, str]:
     """Return embedding provider, model, endpoint, and API key."""
+    selected = _EMBEDDING_OVERRIDE.get() or _SELECTED_EMBEDDING_MODEL
+    if selected is not None:
+        return "local", selected, "", ""
     provider = os.getenv("EMBEDDING_PROVIDER", "local").strip().lower()
     if provider == "local":
         return (
@@ -1894,6 +1910,7 @@ def index_document(
     settings: RagSettings,
     store: Optional[PersistentDocumentStore] = None,
     document_hash: str = "",
+    require_embeddings: bool = False,
 ) -> dict:
     """Parse, chunk, embed, persist, and atomically activate one document."""
     chunks, page_count, visual_pages = parse_pdf(pdf_bytes, settings)
@@ -1905,6 +1922,8 @@ def index_document(
             embeddings = embed_texts([chunk.text for chunk in chunks])
             embedding_provider, embedding_model, _, _ = embedding_config()
     except RuntimeError:
+        if require_embeddings:
+            raise
         # Text extraction and BM25 remain fully usable when a local embedding
         # model is unavailable or only partially cached.
         embeddings = []
@@ -1954,6 +1973,7 @@ def ingest_document(
     pdf_bytes: bytes,
     settings: RagSettings,
     store: PersistentDocumentStore,
+    require_embeddings: bool = False,
 ) -> dict:
     """Reuse an exact persisted PDF/index match or build it exactly once."""
     with _INGEST_LOCK:
@@ -1977,8 +1997,43 @@ def ingest_document(
             settings,
             store=store,
             document_hash=document_hash,
+            require_embeddings=require_embeddings,
         )
         return {**status, "deduplicated": False}
+
+
+def embedding_selection() -> dict:
+    """Describe configured retrieval separately from the answer-generating LLM."""
+    return {
+        "embedding_model": embedding_config()[1],
+        "embedding_models": [{"id": model, "label": label} for model, label in EMBEDDING_CHOICES.items()],
+        "document": DOCUMENT_INDEX.status(),
+    }
+
+
+def switch_embedding_model(model: str) -> dict:
+    """Serialize reindexing and publish a model only after it succeeds."""
+    global _SELECTED_EMBEDDING_MODEL
+    if not isinstance(model, str) or model not in EMBEDDING_CHOICES:
+        raise ValueError("Choose Gemma or BGE.")
+    with _INGEST_LOCK:
+        current = embedding_config()[1]
+        document = DOCUMENT_INDEX.status()
+        if model == current and (not document["loaded"] or document["embedding_model"] == model):
+            return embedding_selection()
+        store = document_store()
+        token = _EMBEDDING_OVERRIDE.set(model)
+        try:
+            # Validate availability even when no PDF has been uploaded yet.
+            local_embedder(model)
+            filename, pdf_bytes = DOCUMENT_INDEX.source()
+            if pdf_bytes:
+                ingest_document(filename, pdf_bytes, runtime_settings(), store, require_embeddings=True)
+            store.select_embedding_model(model)
+            _SELECTED_EMBEDDING_MODEL = model
+        finally:
+            _EMBEDDING_OVERRIDE.reset(token)
+        return embedding_selection()
 
 
 def clean_messages(messages: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -2135,18 +2190,34 @@ class ChatHandler(SimpleHTTPRequestHandler):
                 "ready": ready,
                 "provider": provider,
                 "model": model,
-                "document": DOCUMENT_INDEX.status(),
-                "default_settings": DEFAULT_SETTINGS.to_dict(),
+                **embedding_selection(),
             })
             return
         super().do_GET()
 
     def do_POST(self) -> None:  # noqa: N802
+        # The application has one shared active PDF. Keep its vector model and
+        # query model consistent across concurrent chat, upload, and switching.
+        with _INGEST_LOCK:
+            self._post_locked()
+
+    def _post_locked(self) -> None:
+        if self.path == "/api/embedding-model":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if not 0 < length <= 1000:
+                    raise ValueError("Invalid model-selection request.")
+                data = json.loads(self.rfile.read(length))
+                if not isinstance(data, dict):
+                    raise ValueError("Choose Gemma or BGE.")
+                self.send_json(HTTPStatus.OK, switch_embedding_model(data.get("model")))
+            except (ValueError, json.JSONDecodeError) as exc:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            except RuntimeError as exc:
+                self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(exc)})
+            return
         if self.path == "/api/documents":
             self.upload_document()
-            return
-        if self.path == "/api/documents/reindex":
-            self.reindex_document()
             return
         if self.path != "/api/chat":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
@@ -2163,7 +2234,7 @@ class ChatHandler(SimpleHTTPRequestHandler):
                 raise ValueError("messages must be a non-empty list.")
             if len(messages) > 30:
                 raise ValueError("This learning app keeps at most 30 messages per request.")
-            settings = RagSettings.from_dict(data.get("settings"))
+            settings = runtime_settings()
             messages = messages[-settings.history_messages:]
             latest_question = next(
                 (message.get("content", "") for message in reversed(messages) if message.get("role") == "user"),
@@ -2245,36 +2316,18 @@ class ChatHandler(SimpleHTTPRequestHandler):
             if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/pdf":
                 raise ValueError("Upload a PDF file.")
             length = int(self.headers.get("Content-Length", "0"))
-            if length <= 0 or length > MAX_PDF_BYTES:
-                raise ValueError("PDF size must be between 1 byte and 10 MB.")
+            if length <= 0:
+                raise ValueError("Upload a non-empty PDF file.")
             filename = unquote(self.headers.get("X-Filename", "document.pdf")).strip() or "document.pdf"
             filename = Path(filename).name[:120]
             pdf_bytes = self.rfile.read(length)
-            settings = settings_from_header(self.headers.get("X-RAG-Settings"))
+            if len(pdf_bytes) != length:
+                raise ValueError("The PDF upload was incomplete. Please try again.")
             self.send_json(
                 HTTPStatus.CREATED,
-                ingest_document(filename, pdf_bytes, settings, document_store()),
+                ingest_document(filename, pdf_bytes, runtime_settings(), document_store()),
             )
         except (ValueError, UnicodeError) as exc:
-            self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
-        except RuntimeError as exc:
-            self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(exc)})
-
-    def reindex_document(self) -> None:
-        """Rebuild the active PDF after sentence-window settings change."""
-        try:
-            length = int(self.headers.get("Content-Length", "0"))
-            if length <= 0 or length > 20_000:
-                raise ValueError("Reindex settings must be between 1 and 20,000 bytes.")
-            data = json.loads(self.rfile.read(length))
-            settings = RagSettings.from_dict(data.get("settings") if isinstance(data, dict) else None)
-            filename, pdf_bytes = DOCUMENT_INDEX.source()
-            if not pdf_bytes:
-                raise ValueError("Upload a PDF before rebuilding its index.")
-            with _INGEST_LOCK:
-                status = index_document(filename, pdf_bytes, settings, store=document_store())
-            self.send_json(HTTPStatus.OK, status)
-        except (ValueError, json.JSONDecodeError) as exc:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
         except RuntimeError as exc:
             self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(exc)})
@@ -2283,19 +2336,23 @@ class ChatHandler(SimpleHTTPRequestHandler):
         if self.path != "/api/documents":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
             return
-        DOCUMENT_INDEX.clear()
-        document_store().deactivate()
-        self.send_json(HTTPStatus.OK, DOCUMENT_INDEX.status())
+        with _INGEST_LOCK:
+            DOCUMENT_INDEX.clear()
+            document_store().deactivate()
+            self.send_json(HTTPStatus.OK, DOCUMENT_INDEX.status())
 
 
 def main() -> None:
+    global _SELECTED_EMBEDDING_MODEL
     load_env()
     store = document_store()
+    _SELECTED_EMBEDDING_MODEL = store.selected_embedding_model()
+    settings = runtime_settings()
     latest_document = store.load_latest()
     if latest_document is not None:
         configured_provider, configured_model, _, _ = embedding_config()
         configured_profile = embedding_index_profile(configured_provider, configured_model)
-        configured_signature = document_index_signature(DEFAULT_SETTINGS, configured_profile)
+        configured_signature = document_index_signature(settings, configured_profile)
         if latest_document.index_signature != configured_signature:
             print(
                 f"Reindexing {latest_document.filename} with {configured_model}; "
@@ -2305,14 +2362,15 @@ def main() -> None:
             index_document(
                 latest_document.filename,
                 latest_document.pdf_bytes,
-                DEFAULT_SETTINGS,
+                settings,
                 store=store,
                 document_hash=latest_document.document_hash,
             )
         else:
             activate_stored_document(store, latest_document)
     port = int(os.getenv("APP_PORT", "8000"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), ChatHandler)
+    host = os.getenv("APP_HOST", "127.0.0.1")
+    server = ThreadingHTTPServer((host, port), ChatHandler)
     print(f"Chat app running at http://localhost:{port}")
     try:
         server.serve_forever()

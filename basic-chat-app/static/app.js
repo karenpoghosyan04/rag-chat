@@ -10,132 +10,13 @@ const pdfInput = document.querySelector('#pdf-input')
 const uploadPdf = document.querySelector('#upload-pdf')
 const removePdf = document.querySelector('#remove-pdf')
 const documentStatus = document.querySelector('#document-status')
-const openSettings = document.querySelector('#open-settings')
-const closeSettings = document.querySelector('#close-settings')
-const settingsDialog = document.querySelector('#settings-dialog')
-const settingsForm = document.querySelector('#settings-form')
-const settingsError = document.querySelector('#settings-error')
-const settingsSummary = document.querySelector('#settings-summary')
-const resetSettings = document.querySelector('#reset-settings')
-const SETTINGS_VERSION = 'embeddinggemma-2-v1'
-
-const DEFAULT_SETTINGS = {
-  sentences_per_chunk: 4,
-  overlap_sentences: 1,
-  search_method: 'hybrid',
-  max_context_chunks: 4,
-  bm25_min_relevance: 0.18,
-  embedding_min_similarity: 0.63,
-  min_score: 0.20,
-  hybrid_candidates: 25,
-  rrf_k: 60,
-  bm25_weight: 1,
-  embedding_weight: 1,
-  enable_vision: true,
-  max_vision_pages: 2,
-  temperature: 0.2,
-  max_output_tokens: 1200,
-  history_messages: 30,
-}
-
-function storedSettings() {
-  try {
-    const stored = JSON.parse(localStorage.getItem('rag-settings') || '{}')
-    if (localStorage.getItem('rag-settings-version') !== SETTINGS_VERSION) {
-      localStorage.setItem('rag-settings-version', SETTINGS_VERSION)
-      return {
-        ...DEFAULT_SETTINGS,
-        ...stored,
-        embedding_min_similarity: DEFAULT_SETTINGS.embedding_min_similarity,
-        min_score: DEFAULT_SETTINGS.min_score,
-        hybrid_candidates: DEFAULT_SETTINGS.hybrid_candidates,
-      }
-    }
-    return { ...DEFAULT_SETTINGS, ...stored }
-  } catch {
-    return { ...DEFAULT_SETTINGS }
-  }
-}
-
+const embeddingModel = document.querySelector('#embedding-model')
+const embeddingModelStatus = document.querySelector('#embedding-model-status')
+let selectedEmbeddingModel = embeddingModel.value
+let setupAvailable = false
 // This array is the chat's short-term memory. We send it with every request.
 let messages = []
 let isLoading = false
-let settings = storedSettings()
-let currentDocument = {}
-
-function setFormSettings(values) {
-  for (const [name, value] of Object.entries(values)) {
-    const field = settingsForm.elements.namedItem(name)
-    if (!field) continue
-    if (field.type === 'checkbox') field.checked = Boolean(value)
-    else field.value = value
-  }
-  updateSettingsState()
-}
-
-function numericSetting(name) {
-  return Number(settingsForm.elements.namedItem(name).value)
-}
-
-function readFormSettings() {
-  return {
-    sentences_per_chunk: numericSetting('sentences_per_chunk'),
-    overlap_sentences: numericSetting('overlap_sentences'),
-    search_method: settingsForm.elements.namedItem('search_method').value,
-    max_context_chunks: numericSetting('max_context_chunks'),
-    bm25_min_relevance: numericSetting('bm25_min_relevance'),
-    embedding_min_similarity: numericSetting('embedding_min_similarity'),
-    min_score: numericSetting('min_score'),
-    hybrid_candidates: numericSetting('hybrid_candidates'),
-    rrf_k: numericSetting('rrf_k'),
-    bm25_weight: numericSetting('bm25_weight'),
-    embedding_weight: numericSetting('embedding_weight'),
-    enable_vision: settingsForm.elements.namedItem('enable_vision').checked,
-    max_vision_pages: numericSetting('max_vision_pages'),
-    temperature: numericSetting('temperature'),
-    max_output_tokens: numericSetting('max_output_tokens'),
-    history_messages: numericSetting('history_messages'),
-  }
-}
-
-function validateSettings(values) {
-  if (values.overlap_sentences >= values.sentences_per_chunk) {
-    return 'Overlapping sentences must be smaller than sentences per chunk.'
-  }
-  if (values.hybrid_candidates < values.max_context_chunks) {
-    return 'Candidate pool must be at least as large as sources sent to the model.'
-  }
-  if (values.search_method === 'hybrid' && values.bm25_weight === 0 && values.embedding_weight === 0) {
-    return 'At least one hybrid fusion weight must be greater than zero.'
-  }
-  return ''
-}
-
-function updateSettingsState() {
-  const method = settingsForm.elements.namedItem('search_method').value
-  const bm25Enabled = method !== 'embedding'
-  const embeddingsEnabled = method !== 'bm25'
-  settingsForm.elements.namedItem('bm25_min_relevance').disabled = !bm25Enabled
-  settingsForm.elements.namedItem('embedding_min_similarity').disabled = !embeddingsEnabled
-  settingsForm.elements.namedItem('rrf_k').disabled = method !== 'hybrid'
-  settingsForm.elements.namedItem('bm25_weight').disabled = method !== 'hybrid'
-  settingsForm.elements.namedItem('embedding_weight').disabled = method !== 'hybrid'
-  settingsForm.elements.namedItem('max_vision_pages').disabled = !settingsForm.elements.namedItem('enable_vision').checked
-  const label = method === 'hybrid' ? 'Hybrid' : method === 'embedding' ? 'Embeddings' : 'BM25'
-  settingsSummary.textContent = `${label} · ${settingsForm.elements.namedItem('sentences_per_chunk').value} sentences/chunk`
-}
-
-async function reindexDocument() {
-  documentStatus.textContent = `Rebuilding ${currentDocument.filename}…`
-  const response = await fetch('/api/documents/reindex', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ settings }),
-  })
-  const data = await response.json()
-  if (!response.ok) throw new Error(data.error || 'The PDF index could not be rebuilt.')
-  updateDocumentStatus(data)
-}
 
 async function checkSetup() {
   try {
@@ -147,14 +28,49 @@ async function checkSetup() {
     } else {
       statusText.textContent = 'API key needed'
     }
-    if (!localStorage.getItem('rag-settings') && config.default_settings) {
-      settings = { ...DEFAULT_SETTINGS, ...config.default_settings }
-    }
+    setupAvailable = true
+    selectedEmbeddingModel = config.embedding_model || selectedEmbeddingModel
+    embeddingModel.value = selectedEmbeddingModel
+    embeddingModel.disabled = isLoading
     updateDocumentStatus(config.document)
   } catch {
+    setupAvailable = false
+    embeddingModel.disabled = true
     statusText.textContent = 'Backend offline'
   }
 }
+
+function setBusy(busy) {
+  isLoading = busy
+  send.disabled = busy
+  uploadPdf.disabled = busy
+  removePdf.disabled = busy
+  embeddingModel.disabled = busy || !setupAvailable
+}
+
+embeddingModel.addEventListener('change', async () => {
+  const requested = embeddingModel.value
+  setBusy(true)
+  embeddingModelStatus.textContent = 'Loading model and rebuilding document search… Keep this tab open.'
+  try {
+    const response = await fetch('/api/embedding-model', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: requested }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.error || 'The search model could not be changed.')
+    selectedEmbeddingModel = data.embedding_model
+    embeddingModel.value = selectedEmbeddingModel
+    updateDocumentStatus(data.document)
+    embeddingModelStatus.textContent = `${embeddingModel.selectedOptions[0].textContent} is ready.`
+  } catch (error) {
+    embeddingModel.value = selectedEmbeddingModel
+    embeddingModelStatus.textContent = `Model unchanged. ${error.message}`
+  } finally {
+    setBusy(false)
+  }
+})
 
 function addMessage(role, text, kind = '', sources = []) {
   welcome?.remove()
@@ -162,7 +78,15 @@ function addMessage(role, text, kind = '', sources = []) {
   article.className = `message ${role} ${kind}`
   const avatar = document.createElement('div')
   avatar.className = 'avatar'
-  avatar.textContent = role === 'user' ? 'You' : 'AI'
+  if (role === 'user') {
+    avatar.textContent = 'You'
+  } else {
+    const mark = document.createElement('img')
+    mark.src = '/brand/contextflow-mark.svg'
+    mark.alt = 'ContextFlow'
+    mark.className = 'contextflow-avatar'
+    avatar.append(mark)
+  }
   const content = document.createElement('div')
   content.className = 'message-content'
   const answerText = document.createElement('div')
@@ -193,7 +117,7 @@ function addMessage(role, text, kind = '', sources = []) {
   }
   article.append(avatar, content)
   chat.append(article)
-  if (role === 'assistant' && text) typesetMath(answerText)
+  if (text) typesetMath(answerText)
   chat.scrollTop = chat.scrollHeight
   return article
 }
@@ -319,15 +243,14 @@ async function sendMessage(text) {
   addMessage('user', userMessage.content)
   input.value = ''
   resizeInput()
-  isLoading = true
-  send.disabled = true
+  setBusy(true)
   const typing = addTyping()
 
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages.slice(-settings.history_messages), settings }),
+      body: JSON.stringify({ messages: messages.slice(-30) }),
     })
     const data = await response.json()
     typing.remove()
@@ -340,14 +263,12 @@ async function sendMessage(text) {
     addMessage('assistant', error.message, 'error')
     throw error
   } finally {
-    isLoading = false
-    send.disabled = false
+    setBusy(false)
     input.focus()
   }
 }
 
 function updateDocumentStatus(documentInfo = {}) {
-  currentDocument = documentInfo
   if (documentInfo.loaded) {
     const visualText = documentInfo.visual_pages ? ` · ${documentInfo.visual_pages} visual pages` : ''
     const retrievalText = documentInfo.retrieval ? ` · ${documentInfo.retrieval}` : ''
@@ -370,34 +291,49 @@ async function uploadDocument(file) {
     return
   }
   if (file.size > 10 * 1024 * 1024) {
-    addMessage('assistant', 'That PDF is larger than the 10 MB limit.', 'error')
-    return
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+    const proceed = window.confirm(
+      `This PDF is ${sizeMb} MB, larger than 10 MB. Uploading and indexing a large book can take several minutes or longer. Keep this tab open until it is ready.\n\nAre you okay with waiting? Continue uploading?`
+    )
+    if (!proceed) {
+      pdfInput.value = ''
+      return
+    }
   }
 
-  uploadPdf.disabled = true
-  documentStatus.textContent = `Reading ${file.name}…`
+  setBusy(true)
+  const startedAt = Date.now()
+  const updateProcessingStatus = () => {
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+    const duration = `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
+    documentStatus.textContent = `Uploading and indexing ${file.name}… ${duration}. Keep this tab open.`
+  }
+  updateProcessingStatus()
+  const processingTimer = window.setInterval(updateProcessingStatus, 1000)
   try {
     const response = await fetch('/api/documents', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/pdf',
         'X-Filename': encodeURIComponent(file.name),
-        'X-RAG-Settings': encodeURIComponent(JSON.stringify(settings)),
       },
       body: file,
     })
     const data = await response.json()
     if (!response.ok) throw new Error(data.error || 'The PDF could not be uploaded.')
+    window.clearInterval(processingTimer)
     updateDocumentStatus(data)
     const storageMessage = data.deduplicated
       ? 'It was already indexed, so I reused the saved copy.'
       : 'It was indexed and saved for future uploads.'
     addMessage('assistant', `${data.filename} is ready. ${storageMessage} Ask me a question about it.`)
   } catch (error) {
+    window.clearInterval(processingTimer)
     await checkSetup()
     addMessage('assistant', error.message, 'error')
   } finally {
-    uploadPdf.disabled = false
+    window.clearInterval(processingTimer)
+    setBusy(false)
     pdfInput.value = ''
   }
 }
@@ -438,57 +374,6 @@ removePdf.addEventListener('click', async () => {
     addMessage('assistant', error.message, 'error')
   } finally {
     removePdf.disabled = false
-  }
-})
-
-openSettings.addEventListener('click', () => {
-  settingsError.hidden = true
-  setFormSettings(settings)
-  settingsDialog.showModal()
-})
-closeSettings.addEventListener('click', () => settingsDialog.close())
-settingsDialog.addEventListener('click', (event) => {
-  if (event.target === settingsDialog) settingsDialog.close()
-})
-settingsForm.elements.namedItem('search_method').addEventListener('change', updateSettingsState)
-settingsForm.elements.namedItem('enable_vision').addEventListener('change', updateSettingsState)
-settingsForm.elements.namedItem('sentences_per_chunk').addEventListener('input', updateSettingsState)
-resetSettings.addEventListener('click', () => {
-  settingsError.hidden = true
-  setFormSettings(DEFAULT_SETTINGS)
-})
-settingsForm.addEventListener('submit', async (event) => {
-  event.preventDefault()
-  settingsError.hidden = true
-  if (!settingsForm.reportValidity()) return
-  const nextSettings = readFormSettings()
-  const validationError = validateSettings(nextSettings)
-  if (validationError) {
-    settingsError.textContent = validationError
-    settingsError.hidden = false
-    return
-  }
-  const requiresReindex = Boolean(
-    currentDocument.loaded
-    && (nextSettings.sentences_per_chunk !== settings.sentences_per_chunk
-      || nextSettings.overlap_sentences !== settings.overlap_sentences)
-  )
-  settings = nextSettings
-  localStorage.setItem('rag-settings', JSON.stringify(settings))
-  localStorage.setItem('rag-settings-version', SETTINGS_VERSION)
-  const applyButton = settingsForm.querySelector('.primary-button')
-  applyButton.disabled = true
-  applyButton.textContent = requiresReindex ? 'Rebuilding…' : 'Applying…'
-  try {
-    if (requiresReindex) await reindexDocument()
-    settingsDialog.close()
-    if (requiresReindex) addMessage('assistant', 'The PDF was reindexed with the new chunk settings.')
-  } catch (error) {
-    settingsError.textContent = error.message
-    settingsError.hidden = false
-  } finally {
-    applyButton.disabled = false
-    applyButton.textContent = 'Apply settings'
   }
 })
 

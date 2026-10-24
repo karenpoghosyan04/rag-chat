@@ -1,0 +1,25 @@
+name: RAG quality checks
+on:
+  push:
+    paths: ['basic-chat-app/**', '.github/workflows/rag-checks.yml']
+  pull_request:
+    paths: ['basic-chat-app/**', '.github/workflows/rag-checks.yml']
+jobs:
+  offline-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: basic-chat-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -r requirements.txt 'scikit-learn>=1.6,<2' 'joblib>=1.4,<2'
+      - run: python check_quality.py
+      - run: python -m unittest discover -s tests -v
+      - run: python train_relevance.py --output artifacts/ci-relevance
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-relevance-report
+          path: basic-chat-app/artifacts/ci-relevance/report.json

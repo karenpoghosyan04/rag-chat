@@ -12,6 +12,8 @@ import json
 import statistics
 import sys
 import time
+from itertools import product
+from unittest.mock import patch
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -207,8 +209,8 @@ def evaluate_cases(
     production_ready = (
         recall_at_max_k is not None
         and no_answer_accuracy is not None
-        and recall_at_max_k > production_targets[f"recall@{max_k}"]
-        and no_answer_accuracy > production_targets["no_answer_accuracy"]
+        and recall_at_max_k >= production_targets[f"recall@{max_k}"]
+        and no_answer_accuracy >= production_targets["no_answer_accuracy"]
     )
     return {
         "cases": len(cases),
@@ -231,6 +233,13 @@ def run_benchmark(
     chunk_sizes: list[int],
     chunk_overlaps: list[int],
     dense_weights: list[float],
+    *,
+    min_scores: Optional[list[float]] = None,
+    embedding_thresholds: Optional[list[float]] = None,
+    candidate_counts: Optional[list[int]] = None,
+    rrf_values: Optional[list[int]] = None,
+    minimum_recall: float = 0.85,
+    minimum_no_answer: float = 0.85,
 ) -> dict:
     """Benchmark token chunking and dense/sparse RRF ratios with cached queries."""
     if base_settings.search_method == "bm25":
@@ -240,6 +249,23 @@ def run_benchmark(
     query_embeddings = dict(zip(questions, query_vectors))
     pdf_bytes = pdf.read_bytes()
     runs: list[dict] = []
+    tuning_grid = {
+        "min_score": min_scores or [base_settings.min_score],
+        "embedding_min_similarity": embedding_thresholds or [base_settings.embedding_min_similarity],
+        "hybrid_candidates": candidate_counts or [base_settings.hybrid_candidates],
+        "rrf_k": rrf_values or [base_settings.rrf_k],
+    }
+    # A pair's cross-encoder score is independent of fusion weights and gates.
+    # Reuse it within this benchmark; never use cached timing to rank settings.
+    score_cache: dict[tuple[str, str], float] = {}
+    original_rerank = app.rerank_texts
+
+    def cached_rerank(query: str, documents: list[str]) -> list[float]:
+        missing = list(dict.fromkeys(text for text in documents if (query, text) not in score_cache))
+        if missing:
+            scores = original_rerank(query, missing)
+            score_cache.update({(query, text): score for text, score in zip(missing, scores)})
+        return [score_cache[query, text] for text in documents]
 
     for chunk_size in chunk_sizes:
         for overlap in chunk_overlaps:
@@ -269,41 +295,32 @@ def run_benchmark(
                 embeddings,
                 embedding_model,
             )
-            for dense_weight in dense_weights:
+            for dense_weight, combination in product(dense_weights, product(*tuning_grid.values())):
                 values = chunk_settings.to_dict()
                 values.update({
                     "bm25_weight": 1.0 - dense_weight,
                     "embedding_weight": dense_weight,
                 })
+                values.update(dict(zip(tuning_grid, combination)))
                 settings = app.RagSettings.from_dict(values)
-                report = evaluate_cases(
-                    index,
-                    cases,
-                    settings,
-                    cutoffs,
-                    embed_query=query_embeddings.__getitem__,
-                    include_details=False,
-                )
+                with patch.object(app, "rerank_texts", cached_rerank):
+                    report = evaluate_cases(
+                        index, cases, settings, cutoffs,
+                        embed_query=query_embeddings.__getitem__, include_details=False,
+                    )
                 runs.append({
                     "chunk_size_tokens": chunk_size,
                     "chunk_overlap_tokens": overlap,
                     "dense_weight": dense_weight,
                     "bm25_weight": 1.0 - dense_weight,
                     "chunks": len(chunks),
+                    "settings": settings.to_dict(),
                     "metrics": report["metrics"],
                 })
 
     max_k = max(cutoffs)
-    best = max(
-        runs,
-        key=lambda run: (
-            run["metrics"].get(f"recall@{max_k}") or 0.0,
-            run["metrics"].get("no_answer_accuracy") or 0.0,
-            run["metrics"].get(f"mrr@{max_k}") or 0.0,
-            -(run["metrics"].get("latency_ms_p95") or float("inf")),
-        ),
-    )
-    production_targets = {f"recall@{max_k}": 0.85, "no_answer_accuracy": 0.85}
+    best = select_best_settings(runs, cutoffs, minimum_recall, minimum_no_answer)
+    production_targets = {f"recall@{max_k}": minimum_recall, "no_answer_accuracy": minimum_no_answer}
     passing_runs = [
         run for run in runs
         if (run["metrics"].get(f"recall@{max_k}") or 0.0) >= production_targets[f"recall@{max_k}"]
@@ -317,8 +334,11 @@ def run_benchmark(
             "chunk_overlap_tokens": chunk_overlaps,
             "dense_weight": dense_weights,
             "bm25_weight": "1 - dense_weight",
+            **tuning_grid,
         },
-        "selection_order": [f"recall@{max_k}", "no_answer_accuracy", f"mrr@{max_k}", "latency_ms_p95"],
+        "scope": "Tuning on the supplied labels; requires independent questions and PDFs for generalization claims.",
+        "timing_scope": "Cached query vectors and reranker pairs; these latencies are not end-to-end production timings.",
+        "selection_order": ["meets recall and no-answer targets", "precision@k", "recall@k", f"mrr@{max_k}", "smaller k"],
         "production_gate": {
             "targets": production_targets,
             "passing_runs": len(passing_runs),
@@ -327,6 +347,38 @@ def run_benchmark(
         "best": best,
         "runs": runs,
     }
+
+
+def select_best_settings(runs: list[dict], cutoffs: list[int], minimum_recall: float, minimum_no_answer: float) -> dict:
+    """Choose precision at a usable context count, subject to quality floors.
+
+    If no configuration meets both floors, return a diagnostic candidate marked
+    ineligible. Callers must not silently deploy that fallback.
+    """
+    candidates = []
+    for run in runs:
+        for k in sorted(set(cutoffs)):
+            if not 1 <= k <= 12 or k > run["settings"]["hybrid_candidates"]:
+                continue
+            metrics = run["metrics"]
+            recall = metrics.get(f"recall@{k}")
+            rejection = metrics.get("no_answer_accuracy")
+            eligible = (recall is not None and rejection is not None
+                        and recall >= minimum_recall and rejection >= minimum_no_answer)
+            settings = {**run["settings"], "max_context_chunks": k}
+            candidates.append({**run, "settings": settings, "k": k, "eligible": eligible})
+    if not candidates:
+        raise ValueError("No exportable configuration: use a cutoff from 1 to 12 within the candidate pool.")
+
+    def rank(candidate):
+        metrics, k = candidate["metrics"], candidate["k"]
+        recall = metrics.get(f"recall@{k}") or 0.0
+        rejection = metrics.get("no_answer_accuracy") or 0.0
+        return (candidate["eligible"],
+                (metrics.get(f"precision@{k}") or 0.0) if candidate["eligible"] else min(recall, rejection),
+                recall, rejection, metrics.get(f"mrr@{max(cutoffs)}") or 0.0, -k)
+
+    return max(candidates, key=rank)
 
 
 def _settings_from_args(args: argparse.Namespace) -> app.RagSettings:
@@ -368,13 +420,13 @@ def _parse_int_list(parser: argparse.ArgumentParser, value: str, option: str) ->
     return parsed
 
 
-def _parse_weight_list(parser: argparse.ArgumentParser, value: str) -> list[float]:
+def _parse_weight_list(parser: argparse.ArgumentParser, value: str, option: str = "--dense-weights", minimum: float = 0.0) -> list[float]:
     try:
         parsed = sorted(set(float(item.strip()) for item in value.split(",")))
     except ValueError:
         parsed = []
-    if not parsed or any(not 0 <= item <= 1 for item in parsed):
-        parser.error("--dense-weights must contain numbers between 0 and 1")
+    if not parsed or any(not minimum <= item <= 1 for item in parsed):
+        parser.error(f"{option} must contain numbers between {minimum:g} and 1")
     return parsed
 
 
@@ -396,6 +448,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--chunk-sizes", default="256,512,1024", help="Benchmark token budgets")
     parser.add_argument("--chunk-overlaps", default="0,64", help="Benchmark token overlaps")
     parser.add_argument("--dense-weights", default="0,0.5,1", help="Dense RRF ratios; BM25 uses 1-ratio")
+    parser.add_argument("--min-scores", help="Benchmark comma-separated passage relevance thresholds")
+    parser.add_argument("--embedding-thresholds", help="Benchmark comma-separated dense answerability thresholds")
+    parser.add_argument("--candidate-counts", help="Benchmark comma-separated candidate pool sizes")
+    parser.add_argument("--rrf-values", help="Benchmark comma-separated RRF constants")
+    parser.add_argument("--minimum-recall", type=float, default=0.85, help="Recall floor for precision-based selection")
+    parser.add_argument("--minimum-no-answer", type=float, default=0.85, help="Rejection accuracy floor for selection")
+    parser.add_argument("--best-settings-output", type=Path, help="Export eligible winning settings as JSON (requires benchmark)")
     args = parser.parse_args(argv)
 
     try:
@@ -413,11 +472,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         parser.error("--chunk-sizes values must be positive")
     chunk_overlaps = _parse_int_list(parser, args.chunk_overlaps, "--chunk-overlaps")
     dense_weights = _parse_weight_list(parser, args.dense_weights)
+    if args.best_settings_output and not args.benchmark_output:
+        parser.error("--best-settings-output requires --benchmark-output")
+    if any(not 0 <= value <= 1 for value in (args.minimum_recall, args.minimum_no_answer)):
+        parser.error("Selection floors must be between 0 and 1")
+    min_scores = _parse_weight_list(parser, args.min_scores, "--min-scores") if args.min_scores else None
+    embedding_thresholds = _parse_weight_list(parser, args.embedding_thresholds, "--embedding-thresholds", -1.0) if args.embedding_thresholds else None
+    candidate_counts = _parse_int_list(parser, args.candidate_counts, "--candidate-counts") if args.candidate_counts else None
+    rrf_values = _parse_int_list(parser, args.rrf_values, "--rrf-values") if args.rrf_values else None
 
     app.load_env()
     settings = _settings_from_args(args)
+    if args.benchmark_output and settings.search_method == "bm25":
+        parser.error("The hybrid benchmark requires --method hybrid or embedding")
+    # Validate the complete grid before parsing the PDF or invoking any models.
+    for size, overlap, candidates, rrf in product(
+        chunk_sizes, chunk_overlaps, candidate_counts or [settings.hybrid_candidates], rrf_values or [settings.rrf_k]
+    ):
+        app.RagSettings.from_dict({**settings.to_dict(), "chunk_size_tokens": size,
+                                  "chunk_overlap_tokens": overlap, "hybrid_candidates": candidates, "rrf_k": rrf})
     cases = load_cases(args.questions)
-    status = app.index_document(args.pdf.name, args.pdf.read_bytes(), settings)
+    # Evaluation uses its own index and never replaces the user's uploaded PDF.
+    pdf_bytes = args.pdf.read_bytes()
+    chunks, pages, visual_pages = app.parse_pdf(pdf_bytes, settings)
+    embeddings = app.embed_texts([chunk.text for chunk in chunks], kind="passage") if settings.search_method != "bm25" else []
+    embedding_model = app.embedding_config()[1] if embeddings else ""
+    index = app.DocumentIndex()
+    index.replace(args.pdf.name, chunks, pdf_bytes, pages, visual_pages, embeddings, embedding_model)
+    status = index.status()
     embed_query = None
     if settings.search_method != "bm25" and status["embedding_model"]:
         embed_query = lambda query: app.embed_texts([query], kind="query")[0]
@@ -426,7 +508,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"{settings.search_method} retrieval was requested but embeddings were unavailable; "
             "refusing to report fallback BM25 metrics as hybrid results."
         )
-    report = evaluate_cases(app.DOCUMENT_INDEX, cases, settings, cutoffs, embed_query)
+    report = evaluate_cases(index, cases, settings, cutoffs, embed_query)
     report["configuration"] = {
         "pdf": str(args.pdf),
         "settings": settings.to_dict(),
@@ -447,9 +529,20 @@ def main(argv: Optional[list[str]] = None) -> int:
             chunk_sizes,
             chunk_overlaps,
             dense_weights,
+            min_scores=min_scores, embedding_thresholds=embedding_thresholds,
+            candidate_counts=candidate_counts, rrf_values=rrf_values,
+            minimum_recall=args.minimum_recall, minimum_no_answer=args.minimum_no_answer,
         )
         args.benchmark_output.write_text(json.dumps(benchmark, indent=2) + "\n", encoding="utf-8")
         print(f"Wrote {len(benchmark['runs'])} benchmark runs to {args.benchmark_output}")
+        best = benchmark["best"]
+        print(f"Selected k={best['k']}; meets selection targets: {best['eligible']}")
+        if args.best_settings_output:
+            if not best["eligible"]:
+                print("No settings exported: no configuration meets both selection targets.", file=sys.stderr)
+                return 1
+            args.best_settings_output.write_text(json.dumps(best["settings"], indent=2) + "\n", encoding="utf-8")
+            print(f"Wrote selected settings to {args.best_settings_output}")
     recall = report["metrics"][f"recall@{max(cutoffs)}"]
     no_answer = report["metrics"]["no_answer_accuracy"]
     recall_failed = args.fail_under_recall is not None and recall is not None and recall < args.fail_under_recall

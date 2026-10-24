@@ -1,0 +1,20 @@
+{
+  "sentences_per_chunk": 4,
+  "overlap_sentences": 1,
+  "chunk_size_tokens": 512,
+  "chunk_overlap_tokens": 64,
+  "search_method": "hybrid",
+  "max_context_chunks": 3,
+  "bm25_min_relevance": 0.18,
+  "embedding_min_similarity": 0.63,
+  "min_score": 0.2,
+  "hybrid_candidates": 10,
+  "rrf_k": 60,
+  "bm25_weight": 0.75,
+  "embedding_weight": 0.25,
+  "enable_vision": true,
+  "max_vision_pages": 2,
+  "temperature": 0.2,
+  "max_output_tokens": 1200,
+  "history_messages": 30
+}

@@ -1,0 +1,194 @@
+{
+  "purpose": "Offline supervised prototype; never used by the chat app.",
+  "label_policy": "Exact evidence matches are positive; other pairs are weak negatives, not verified irrelevant.",
+  "split_policy": "Question-disjoint train/validation from prior calibration questions; same source document.",
+  "limitations": [
+    "One document and 41 questions cannot establish generalization.",
+    "Validation is used to choose a model, so its score is not a final test score.",
+    "The prior holdout has already been reported; collect new documents and labels for a fresh final test.",
+    "Lexical classifiers may miss paraphrases. No model is promoted to live retrieval."
+  ],
+  "train_case_numbers": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    11,
+    12,
+    14,
+    16,
+    17,
+    18,
+    19,
+    21,
+    22,
+    24,
+    27,
+    29,
+    31,
+    32,
+    33,
+    36,
+    38,
+    40
+  ],
+  "validation_case_numbers": [
+    8,
+    9,
+    13,
+    23,
+    26,
+    28,
+    34,
+    39
+  ],
+  "excluded_prior_holdout_case_numbers": [
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    37,
+    41
+  ],
+  "pair_counts": {
+    "train": 792,
+    "validation": 264,
+    "train_positive": 21,
+    "validation_positive": 7
+  },
+  "input_sha256": {
+    "eval_questions.jsonl": "e6a915e621c4657e57b742ff8beda1c5416d782b2df9af3fd2e6ad7dcdf36616",
+    "frozen-corpus.json": "cb2874392a7585d9099e3dbe2bd3013381f5a164adc80e0dd33276155caa0a57",
+    "calibration.json": "2f250532d1f7f292e998f8103f9d020723655ece3bac726b01c03c6f38c054df"
+  },
+  "versions": {
+    "python": "3.13.7",
+    "numpy": "2.5.3",
+    "sklearn": "1.9.1"
+  },
+  "baseline_query_coverage": {
+    "average_precision": 0.16607796414344034,
+    "precision_at_0.5": 0.2,
+    "recall_at_0.5": 0.14285714285714285,
+    "f1_at_0.5": 0.16666666666666666,
+    "answerable_question_hit_at_5": 0.42857142857142855
+  },
+  "models": {
+    "logistic_regression": {
+      "best_params": {
+        "model__C": 10.0
+      },
+      "cv_average_precision": 0.2248034045922359,
+      "validation": {
+        "average_precision": 0.1547066599563571,
+        "precision_at_0.5": 0.07246376811594203,
+        "recall_at_0.5": 0.7142857142857143,
+        "f1_at_0.5": 0.13157894736842105,
+        "answerable_question_hit_at_5": 0.5714285714285714
+      },
+      "search_runs": [
+        {
+          "params": {
+            "model__C": 0.01
+          },
+          "mean_cv_average_precision": 0.18763472341006546,
+          "std_cv_average_precision": 0.07165820916267285
+        },
+        {
+          "params": {
+            "model__C": 0.1
+          },
+          "mean_cv_average_precision": 0.16838415364161677,
+          "std_cv_average_precision": 0.07113712503449961
+        },
+        {
+          "params": {
+            "model__C": 1.0
+          },
+          "mean_cv_average_precision": 0.17864898025391926,
+          "std_cv_average_precision": 0.08614043974011337
+        },
+        {
+          "params": {
+            "model__C": 10.0
+          },
+          "mean_cv_average_precision": 0.2248034045922359,
+          "std_cv_average_precision": 0.1638184064822239
+        }
+      ]
+    },
+    "random_forest": {
+      "best_params": {
+        "model__max_depth": 2,
+        "model__min_samples_leaf": 8
+      },
+      "cv_average_precision": 0.1371895323833112,
+      "validation": {
+        "average_precision": 0.15079365079365079,
+        "precision_at_0.5": 0.07352941176470588,
+        "recall_at_0.5": 0.7142857142857143,
+        "f1_at_0.5": 0.13333333333333333,
+        "answerable_question_hit_at_5": 0.5714285714285714
+      },
+      "search_runs": [
+        {
+          "params": {
+            "model__max_depth": 2,
+            "model__min_samples_leaf": 2
+          },
+          "mean_cv_average_precision": 0.12720246826504836,
+          "std_cv_average_precision": 0.07359349674845195
+        },
+        {
+          "params": {
+            "model__max_depth": 2,
+            "model__min_samples_leaf": 8
+          },
+          "mean_cv_average_precision": 0.1371895323833112,
+          "std_cv_average_precision": 0.07331377742347445
+        },
+        {
+          "params": {
+            "model__max_depth": 4,
+            "model__min_samples_leaf": 2
+          },
+          "mean_cv_average_precision": 0.08500971306844944,
+          "std_cv_average_precision": 0.03202425382779504
+        },
+        {
+          "params": {
+            "model__max_depth": 4,
+            "model__min_samples_leaf": 8
+          },
+          "mean_cv_average_precision": 0.08406542763427573,
+          "std_cv_average_precision": 0.020117029270724663
+        },
+        {
+          "params": {
+            "model__max_depth": null,
+            "model__min_samples_leaf": 2
+          },
+          "mean_cv_average_precision": 0.07960186779274729,
+          "std_cv_average_precision": 0.003365209482329339
+        },
+        {
+          "params": {
+            "model__max_depth": null,
+            "model__min_samples_leaf": 8
+          },
+          "mean_cv_average_precision": 0.07494857272885232,
+          "std_cv_average_precision": 0.012459530472190164
+        }
+      ]
+    }
+  },
+  "live_retrieval_changed": false,
+  "final_test_evaluated": false,
+  "selected_offline_model": "logistic_regression",
+  "selection_reason": "Highest validation average precision; deployment deliberately requires separate end-to-end evidence."
+}

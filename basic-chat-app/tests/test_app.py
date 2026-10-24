@@ -4,7 +4,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
 import app
@@ -902,9 +902,65 @@ class ChatAppTests(unittest.TestCase):
         self.assertGreaterEqual(len(positives), 30)
         self.assertGreaterEqual(len(negatives), 5)
 
-    def test_settings_header_decodes_url_encoded_json(self):
-        settings = app.settings_from_header("%7B%22search_method%22%3A%22bm25%22%7D")
-        self.assertEqual(settings.search_method, "bm25")
+    def test_chat_uses_tuned_defaults_despite_legacy_browser_settings(self):
+        payload = json.dumps({
+            "messages": [{"role": "user", "content": "Hello"}],
+            "settings": {"search_method": "bm25", "temperature": 1.5},
+        }).encode()
+        handler = app.ChatHandler.__new__(app.ChatHandler)
+        handler.path = "/api/chat"
+        handler.headers = {"Content-Length": str(len(payload))}
+        handler.rfile = io.BytesIO(payload)
+        handler.send_json = Mock()
+        with patch("app.call_llm", return_value="Hello") as llm:
+            handler.do_POST()
+        self.assertIs(llm.call_args.args[3], app.DEFAULT_SETTINGS)
+        self.assertEqual(handler.send_json.call_args.args[0], 200)
+
+    def test_upload_uses_tuned_defaults_despite_legacy_settings_header(self):
+        handler = app.ChatHandler.__new__(app.ChatHandler)
+        handler.headers = {
+            "Content-Type": "application/pdf",
+            "Content-Length": "3",
+            "X-Filename": "paper.pdf",
+            "X-RAG-Settings": "%7B%22search_method%22%3A%22bm25%22%7D",
+        }
+        handler.rfile = io.BytesIO(b"pdf")
+        handler.send_json = Mock()
+        with patch("app.document_store") as store, patch("app.ingest_document") as ingest:
+            handler.upload_document()
+        ingest.assert_called_once_with("paper.pdf", b"pdf", app.DEFAULT_SETTINGS, store.return_value)
+        self.assertEqual(handler.send_json.call_args.args[0], 201)
+
+    def test_upload_accepts_pdf_larger_than_ten_mb(self):
+        payload = b"%PDF-" + b"x" * (10 * 1024 * 1024)
+        handler = app.ChatHandler.__new__(app.ChatHandler)
+        handler.headers = {
+            "Content-Type": "application/pdf",
+            "Content-Length": str(len(payload)),
+            "X-Filename": "large-book.pdf",
+        }
+        handler.rfile = io.BytesIO(payload)
+        handler.send_json = Mock()
+        with patch("app.document_store") as store, patch("app.ingest_document") as ingest:
+            handler.upload_document()
+        ingest.assert_called_once_with("large-book.pdf", payload, app.DEFAULT_SETTINGS, store.return_value)
+        self.assertEqual(handler.send_json.call_args.args[0], 201)
+
+    def test_upload_rejects_empty_or_incomplete_pdf(self):
+        for length, payload in ((0, b""), (10, b"pdf")):
+            with self.subTest(length=length):
+                handler = app.ChatHandler.__new__(app.ChatHandler)
+                handler.headers = {
+                    "Content-Type": "application/pdf",
+                    "Content-Length": str(length),
+                }
+                handler.rfile = io.BytesIO(payload)
+                handler.send_json = Mock()
+                with patch("app.ingest_document") as ingest:
+                    handler.upload_document()
+                ingest.assert_not_called()
+                self.assertEqual(handler.send_json.call_args.args[0], 400)
 
     def test_figure_reference_prefers_visual_page_in_chunk_range(self):
         chunk = app.DocumentChunk("Figure 1: The architecture.", 2, 1, page_end=3)
